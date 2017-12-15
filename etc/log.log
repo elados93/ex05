@@ -1,0 +1,82 @@
+commit 3b4b74f5cbaf56a43d54c4203399f2be8a822b5a
+Author: shaharpalmor <shaharpalmor@gmail.com>
+Date:   Sat Dec 9 10:56:46 2017 +0200
+
+    splitting the settings file to server & client.
+
+commit 6ce1734c7b36ce7daf6aecd44fcd5d97458a4420
+Author: elados93 <elados1163@gmail.com>
+Date:   Fri Dec 8 13:35:19 2017 +0200
+
+    Added:
+    - Changing the relative path of the instruction settings and creating an exe directory including the exection files.
+
+commit e31e37f89dde23ad4a7c87918f36f712710f20f7
+Author: elados93 <elados1163@gmail.com>
+Date:   Fri Dec 8 13:06:32 2017 +0200
+
+    Added:
+    - Destructor to client because serverIP is pointer.
+    - Change the reading from file function separated from the clientMain and transfer it to RemoteGameManager class, server class holding the function that reads data from the file(actually only the port).
+    - Adding a trail makefile.
+
+commit 9a860f8dc42188b2f3f0c08f461fe8ef995d431d
+Author: shaharpalmor <shaharpalmor@gmail.com>
+Date:   Wed Dec 6 18:18:28 2017 +0200
+
+    adding comments
+    changing play one turn in remoteGameManager, dealing with the option that the other player had no moves and than he should not make a move on the board since he didnt played.
+    also change a print mode of the server
+
+commit 2d571ef8fc96d983ab75a7f7b8d687c150c9504a
+Author: elados93 <elados1163@gmail.com>
+Date:   Tue Dec 5 20:55:36 2017 +0200
+
+    Added the feature reading port & IP from settings file
+
+commit f141ce664ffce28dfc99259994fee8ab277f4cfc
+Author: shaharpalmor <shaharpalmor@gmail.com>
+Date:   Sun Dec 3 18:31:46 2017 +0200
+
+    Bug fixed:
+    - getPossibleMoves return a pointer.
+    - makePossibleMoves is now void function.
+    - using getLine instand of cin << dummy
+    - adding break to case 3
+    - dealing with win & draw situation more normally now only the looser send the -2
+
+commit 851c82b77b9fcd94b70c171a39ba263ae2d906e2
+Author: shaharpalmor <shaharpalmor@gmail.com>
+Date:   Sun Dec 3 16:19:37 2017 +0200
+
+    adding printing methods
+
+commit bb822da38d080374f80ef70f73c39cf586ff863a
+Author: elados93 <elados1163@gmail.com>
+Date:   Sat Dec 2 17:23:15 2017 +0200
+
+    Fixed the communication between the server & client to work with int, char, int for x, y
+
+commit 73632d3366a7d7c5dabd5eafc55106ccb7824a88
+Author: elados93 <elados1163@gmail.com>
+Date:   Fri Dec 1 17:21:43 2017 +0200
+
+    Fixed the remote player option, added the RemoteGameManager
+
+commit 66553775baec3c0bab9acf01faa804cdc95339e1
+Author: shaharpalmor <shaharpalmor@gmail.com>
+Date:   Fri Dec 1 13:16:33 2017 +0200
+
+    adding details for the remote player
+
+commit 3593d44fa8c653335a19b949fba9cfcb4cf342cc
+Author: elados93 <elados1163@gmail.com>
+Date:   Fri Dec 1 13:01:48 2017 +0200
+
+    Added the remote player option
+
+commit 5e55d49fe56bd127586b32f2d6289e380c8677a2
+Author: elados93 <elados1163@gmail.com>
+Date:   Fri Dec 1 12:54:30 2017 +0200
+
+    Added the remote player option
