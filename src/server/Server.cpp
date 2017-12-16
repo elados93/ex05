@@ -10,12 +10,12 @@
 #include <sstream>
 #include <cstdlib>
 
-#define MAX_CONNECTED_CLIENTS 10
 
 using namespace std;
 
-Server::Server(int port) : port(port), serverSocket(0) {
-    cout << "Server" << endl;
+Server::Server(int port) : port(port), serverSocket(0), commandManager(), numberOfConnectedClients(0) {
+    rooms = new vector <Room*>(MAX_CONNECTED_CLIENTS / 2);
+    cout << "Server was created" << endl;
 }
 
 void Server::start() {
@@ -41,23 +41,31 @@ void Server::start() {
     socklen_t clientAddressLen;
 
     while (true) {
-        cout << "Waiting for #1 client connections..." << endl;
+        cout << "Waiting for client..." << endl;
         // Accept a new client connection
-        int clientSocket1 = accept(serverSocket, (struct
+        int clientSocket = accept(serverSocket, (struct
                 sockaddr *) &clientAddress, &clientAddressLen);
-        cout << "Client #1 connected" << endl;
-        if (clientSocket1 == -1)
+        cout << "Client connected" << endl;
+        if (clientSocket == -1)
             throw "Error on accept client #1";
 
-        cout << "Waiting for #2 client connections..." << endl;
-        // Accept a new client connection
-        int clientSocket2 = accept(serverSocket, (struct
-                sockaddr *) &clientAddress, &clientAddressLen);
-        cout << "Client #2 connected" << endl;
-        if (clientSocket2 == -1)
-            throw "Error on accept client #2";
+        // check if there is enough space for another client
+        if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
 
-        giveClientPriority(clientSocket1, clientSocket2); // inform the client's priority
+        int rc = pthread_create(&clientsThreads[numberOfConnectedClients], NULL
+                , communicateWithClient, (void *)clientSocket);
+
+        // check if the thread is valid
+        if (rc) {
+            cout << "Error: unable to create thread, " << rc << endl;
+            exit(-1);
+        }
+
+        numberOfConnectedClients++; // increment the number of clients for the current one.
+        }
+
+
+        /*giveClientPriority(clientSocket1, clientSocket2); // inform the client's priority
 
         while (true) { // Play the game with 2 players
 
@@ -66,12 +74,31 @@ void Server::start() {
             if (handleClient(clientSocket2, clientSocket1, 2) != 1)
                 break;
         }
-
+*/
 
     } // end of listening to clients
 
 }
 
+void * Server :: communicateWithClient(void *socket) {
+    int clientSocket = (int) socket;
+    while (true) {
+        int stringLength, n;
+        n = (int) read(clientSocket, &stringLength, sizeof(int));
+
+        char *command = new char[stringLength];
+        for (int i = 0; i < stringLength; i++) {
+            n = (int) read(clientSocket, &command[i], sizeof(char));
+            if (n == -1)
+                throw "Error reading message!";
+        }
+        string strCommand(command);
+        delete(command);
+
+        commandManager.executeCommand(strCommand, clientSocket);
+    }
+
+}
 
 // Handle requests from a specific client
 int Server::handleClient(int clientSocketSrc, int clientSocketDst, int srcPriority) {

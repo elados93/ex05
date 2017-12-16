@@ -8,8 +8,21 @@
 
 #include <string.h>
 #include <iostream>
+#include <pthread.h>
+#include <vector>
+#include "Commands/CommandManager.h"
+
+#define MAX_CONNECTED_CLIENTS 10
 
 using namespace std;
+
+typedef struct Room {
+    string roomName;
+    int socket1 = NULL;
+    int socket2 = NULL;
+    bool isRunning = false;
+};
+
 
 class Server {
 public:
@@ -22,6 +35,11 @@ public:
 private:
     int port;
     int serverSocket; // the socket's file descriptor
+    int numberOfConnectedClients;
+    CommandManager commandManager;
+    pthread_t clientsThreads[MAX_CONNECTED_CLIENTS];
+    vector *rooms<Room*>;
+
     /**
      * handing a client request, the client is sending a move and the server give the other client the information.
      * @param clientSocketSrc is the client that wants to transfer the info.
@@ -37,7 +55,8 @@ private:
      * @param socket2 is the socket for the second player.
      */
     void giveClientPriority(int socket1, int socket2);
-};
 
+    void *communicateWithClient(void *socket); // thread function
+};
 
 #endif //EX04_SERVER_H
