@@ -75,7 +75,7 @@ void Client::sendPoint(int x, int y) {
 
 int Client::getPriority() {
     int result;
-    int n = read(clientSocket, &result, sizeof(result));// result is holding the priority given by the server.
+    int n = read(clientSocket, &result, sizeof(result)); // result is holding the priority given by the server.
     if (n == -1)
         throw "Error reading priority from server";
 
@@ -89,4 +89,56 @@ int Client::getClientSocket() const {
 
 Client::~Client() {
     delete(serverIP);
+}
+
+void Client::handleBeforeGame() {
+    while(true) {
+        string request;
+        getline(cin, request); // get the request from client
+        writeToServer(request); // send the request to the server
+
+        string serverFeedback = readFromServer();
+
+        if (strcmp(serverFeedback.c_str(), "Joined") == 0)
+            break;
+
+        if (strcmp(serverFeedback.c_str(), "Started") == 0) {
+            unsigned long firstSpaceOccurrence = request.find_first_of(' ');
+            string roomName = request.substr(firstSpaceOccurrence + 1, request.length());
+
+            cout << "The room: " << roomName << " was created!" << endl;
+            break;
+        }
+
+        cout << serverFeedback << endl; // print the list of the current rooms in the server
+    }
+}
+
+void Client::writeToServer(string request) {
+    unsigned long sLen = request.length();
+    int n;
+    n = (int) write(clientSocket, &sLen, sizeof(int));
+    if (n == -1)
+        throw "Error writing string length!";
+    for (int i = 0; i < sLen; i++) {
+        n = (int) write(clientSocket, &request[i], sizeof(char));
+        if (n == -1)
+            throw "Error writing message!";
+    }
+}
+
+string Client::readFromServer() {
+    int stringLength, n;
+    n = (int) read(clientSocket, &stringLength, sizeof(int));
+    if (n == -1)
+        throw "Error reading string length!";
+    char *command = new char[stringLength];
+    for (int i = 0; i < stringLength; i++) {
+        n = (int) read(clientSocket, &command[i], sizeof(char));
+        if (n == -1)
+            throw "Error reading message!";
+    }
+    string strCommand(command);
+    delete(command);
+    return strCommand;
 }

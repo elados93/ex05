@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 98)
 include_directories(src/client/reversi)
 
 set(REMOTE_FILES src/client/Client.cpp src/client/Client.h
-        src/server/Server.cpp src/server/Server.h src/server/Commands/CommandManager.cpp src/server/Commands/CommandManager.h src/server/Commands/StartCommand.cpp src/server/Commands/StartCommand.h src/server/Commands/PlayCommand.cpp src/server/Commands/PlayCommand.h src/server/Commands/ListCommand.cpp src/server/Commands/ListCommand.h src/server/Commands/JoinCommand.cpp src/server/Commands/JoinCommand.h src/server/Commands/CloseCommand.cpp src/server/Commands/CloseCommand.h)
+        src/server/Server.cpp src/server/Server.h src/server/Commands/CommandManager.cpp src/server/Commands/CommandManager.h src/server/Commands/StartCommand.cpp src/server/Commands/StartCommand.h src/server/Commands/PlayCommand.cpp src/server/Commands/PlayCommand.h src/server/Commands/ListCommand.cpp src/server/Commands/ListCommand.h src/server/Commands/JoinCommand.cpp src/server/Commands/JoinCommand.h src/server/Commands/CloseCommand.cpp src/server/Commands/CloseCommand.h src/server/Commands/Command.cpp)
 
 set(REVERSI_FILES src/client/reversi/AIPlayer.cpp src/client/reversi/AIPlayer.h
         src/client/reversi/Board.cpp src/client/reversi/Board.h

@@ -6,6 +6,10 @@
 #ifndef EX04_CLIENT_H
 #define EX04_CLIENT_H
 
+#include <iostream>
+
+using namespace std;
+
 class Client {
 public:
     Client(const char *serverIP, int serverPort);
@@ -32,11 +36,16 @@ public:
      */
     int getClientSocket() const;
 
+    void handleBeforeGame();
+
     int priority;
 private:
     const char *serverIP;
     int serverPort;
     int clientSocket;
+
+    void writeToServer(string request);
+    string readFromServer();
 };
 
 

@@ -10,20 +10,24 @@
 #include <map>
 #include "Command.h"
 
+using namespace std;
+
 typedef struct SocketAndInformation {
     int socket;
     string information;
+    vector &rooms<Room*>;
 };
 
 class CommandManager {
 public:
-    CommandManager();
+    CommandManager(vector <Room*> &room);
     ~CommandManager();
 
     void executeCommand(string command, int socket);
 
 private:
     map<string, Command *> mapCommands;
+    vector<Room*> &games;
 };
 
 

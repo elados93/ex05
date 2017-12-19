@@ -14,7 +14,7 @@
 using namespace std;
 
 Server::Server(int port) : port(port), serverSocket(0), commandManager(), numberOfConnectedClients(0) {
-    rooms = new vector <Room*>(MAX_CONNECTED_CLIENTS / 2);
+
     cout << "Server was created" << endl;
 }
 

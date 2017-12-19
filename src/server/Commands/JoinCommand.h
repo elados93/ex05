@@ -10,7 +10,7 @@
 
 class JoinCommand : public  Command {
 public:
-    virtual void execute(void * args);
+    virtual void execute(SocketAndInformation args);
 };
 
 

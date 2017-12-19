@@ -57,6 +57,9 @@ int main() {
                 return 0;
             }
             ConsolePrinter printer3(*board, p1, p3);
+
+            client->handleBeforeGame();
+
             int priorityClient = client->getPriority();
             printer3.printInformingGameStarted(client->priority == 1 ? PLAYER_1 : PLAYER_2);
             RemoteGameManager game3(gameState1, p1, p3, printer3, *gameRules, *client);

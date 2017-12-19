@@ -7,16 +7,17 @@
 #define EX04_COMMAND_H
 
 #include <iostream>
+#include "../Server.h"
 
 using namespace std;
 
 class Command {
 public:
-    virtual void execute(void *args) = 0;
+    virtual void execute(SocketAndInformation args) = 0;
     virtual ~Command() {};
-protected:
-    vector rooms
 
+    void sendFeedbackToClient(string request, int clientSocket);
 };
+
 
 #endif //EX04_COMMAND_H

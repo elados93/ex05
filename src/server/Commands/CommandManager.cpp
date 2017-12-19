@@ -10,7 +10,7 @@
 #include "JoinCommand.h"
 #include "ListCommand.h"
 
-CommandManager::CommandManager() {
+CommandManager::CommandManager(vector <Room*> &room) : games(room) {
     mapCommands["start"] = new StartCommand();
     mapCommands["list_game"] = new ListCommand();
     mapCommands["join"] = new JoinCommand();
@@ -32,6 +32,7 @@ void CommandManager::executeCommand(string command, int socket) {
     SocketAndInformation commandDetails;
     commandDetails.socket = socket;
     commandDetails.information = information;
+    commandDetails.rooms = games;
 
     Command *commandObj = mapCommands[explicitCommand];
     commandObj->execute(commandDetails);

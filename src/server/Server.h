@@ -38,7 +38,7 @@ private:
     int numberOfConnectedClients;
     CommandManager commandManager;
     pthread_t clientsThreads[MAX_CONNECTED_CLIENTS];
-    vector *rooms<Room*>;
+    vector rooms<Room*>;
 
     /**
      * handing a client request, the client is sending a move and the server give the other client the information.
