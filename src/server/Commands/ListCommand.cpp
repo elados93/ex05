@@ -5,13 +5,23 @@
 
 #include "ListCommand.h"
 
-void ListCommand::execute(SocketAndInformation args) {
-    char listOfRooms[24] = "The rooms for now are:";
-    for (int i = 0; i < args.rooms.size(); ++i) {
-        Room currentRoom = args.rooms.at(i);
+
+ListCommand::ListCommand() {}
+
+void ListCommand::execute(SocketAndInformation *args) {
+    string listOfRooms;
+    if (args->rooms->empty())
+        listOfRooms.append("There are no rooms!");
+    else
+        listOfRooms.append("The rooms for now are:");
+    for (int i = 0; i < args->rooms->size(); ++i) {
+        Room currentRoom = *(args->rooms->at(i));
         if (!currentRoom.isRunning) {
-            strcat(listOfRooms, " ");
-            strcat(listOfRooms, currentRoom.roomName.c_str());
+            listOfRooms.append(" ");
+            listOfRooms.append(currentRoom.roomName);
         }
     }
+    
+    // inform the client to the rooms list
+    sendFeedbackToClient(listOfRooms, args->socketSrc);
 }

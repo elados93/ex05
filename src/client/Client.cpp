@@ -6,7 +6,6 @@
 #include "Client.h"
 #include <stdio.h>
 #include <sstream>
-#include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -25,9 +24,9 @@ Client::Client(const char *serverIP, int serverPort) :
 void Client::connectToServer() {
     // Create a socket point
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (clientSocket == -1) {
+    if (clientSocket == -1) 
         throw "Error opening socket";
-    }
+    
     // Get a hostent structure for the given host address
     struct hostent *server;
 
@@ -51,26 +50,33 @@ void Client::connectToServer() {
     *) &serverAddress, sizeof(serverAddress)) == -1) {
         throw "Error connecting to server";
     }
-    cout << "Connected to server" << endl << "Waiting for the other players..." << endl;
+    cout << "Connected to server" << endl;
 }
 
 void Client::sendPoint(int x, int y) {
-    // check if the wanted point is -1 -1 and the player has no moves.
-    if (x == -1 && y == -1) {
-        int n1 = write(clientSocket, &x, sizeof(x));
+    stringstream streamX;
+    streamX << x;
+    string strX = streamX.str();
+    stringstream streamY;
+    streamY << y;
+    string strY = streamY.str();
+
+    string playCommand;
+    playCommand.append("play ");
+    playCommand.append(strX);
+    playCommand.append(" ");
+    playCommand.append(strY);
+
+    unsigned long xLen = playCommand.length();
+    int n1;
+    n1 = (int) write(clientSocket, &xLen, sizeof(xLen));
+    if (n1 == -1)
+        throw "Error sending string length";
+    for (unsigned long i = 0; i < xLen; ++i) {
+        n1 = (int) write(clientSocket, &playCommand[i], sizeof(char));
         if (n1 == -1)
             throw "Error writing x value to socket";
-        return;
     }
-    // tranfering the info from playOneturn to the server.
-    int n1 = write(clientSocket, &x, sizeof(x));
-    if (n1 == -1)
-        throw "Error writing x value to socket";
-
-    n1 = write(clientSocket, &y, sizeof(y));
-    if (n1 == -1)
-        throw "Error writing y value to socket";
-
 }
 
 int Client::getPriority() {
@@ -94,18 +100,21 @@ Client::~Client() {
 void Client::handleBeforeGame() {
     while(true) {
         string request;
+
+        // getline(cin, request); // gets dummy before input
         getline(cin, request); // get the request from client
         writeToServer(request); // send the request to the server
 
         string serverFeedback = readFromServer();
 
-        if (strcmp(serverFeedback.c_str(), "Joined") == 0)
+        if (strcmp(serverFeedback.c_str(), "Joined") == 0) {
+            string roomToJoin = translateDetails(request);
+            cout << "Joined: " << roomToJoin << endl;
             break;
-
+        }
+        
         if (strcmp(serverFeedback.c_str(), "Started") == 0) {
-            unsigned long firstSpaceOccurrence = request.find_first_of(' ');
-            string roomName = request.substr(firstSpaceOccurrence + 1, request.length());
-
+            string roomName = translateDetails(request);
             cout << "The room: " << roomName << " was created!" << endl;
             break;
         }
@@ -117,7 +126,7 @@ void Client::handleBeforeGame() {
 void Client::writeToServer(string request) {
     unsigned long sLen = request.length();
     int n;
-    n = (int) write(clientSocket, &sLen, sizeof(int));
+    n = (int) write(clientSocket, &sLen, sizeof(sLen));
     if (n == -1)
         throw "Error writing string length!";
     for (int i = 0; i < sLen; i++) {
@@ -128,8 +137,9 @@ void Client::writeToServer(string request) {
 }
 
 string Client::readFromServer() {
-    int stringLength, n;
-    n = (int) read(clientSocket, &stringLength, sizeof(int));
+    unsigned long stringLength;
+    int n;
+    n = (int) read(clientSocket, &stringLength, sizeof(stringLength));
     if (n == -1)
         throw "Error reading string length!";
     char *command = new char[stringLength];
@@ -141,4 +151,26 @@ string Client::readFromServer() {
     string strCommand(command);
     delete(command);
     return strCommand;
+}
+
+Point *Client::translatePointFromServer() {
+    int xValue, yValue;
+
+    // Read new move arguments from server.
+    int n;
+    n = (int) read(clientSocket, &xValue, sizeof(xValue));
+    if (n == -1)
+        throw "Error reading x value from Src client";
+
+    // Get the y value
+    n = (int) read(clientSocket, &yValue, sizeof(yValue));
+    if (n == -1)
+        throw "Error reading y value from Src client";
+
+    return new Point(xValue, yValue);
+}
+
+string Client::translateDetails(string s) {
+    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
+    return s.substr(firstSpaceOccurrence + 1, s.length());
 }

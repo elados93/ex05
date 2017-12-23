@@ -3,18 +3,27 @@
 // ID: 311200786 307929927
 
 #include "Server.h"
+#include "HandleGame.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
-#include <cstdlib>
 
+pthread_mutex_t mutex_lock;
 
 using namespace std;
 
-Server::Server(int port) : port(port), serverSocket(0), commandManager(), numberOfConnectedClients(0) {
+void *communicateWithClient(void *clientSocketAndServer);
 
+struct ClientSocketAndServer {
+    Server *server;
+    pthread_t *threadID;
+    int clientSocket;
+};
+
+Server::Server(int port) : port(port), serverSocket(0), numberOfConnectedClients(0) {
+    commandManager = new CommandManager(rooms);
     cout << "Server was created" << endl;
 }
 
@@ -26,7 +35,7 @@ void Server::start() {
 
     // Assign a local address to the socket
     struct sockaddr_in serverAddress;
-    bzero((void *) &serverAddress,sizeof(serverAddress));
+    bzero((void *) &serverAddress, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(port);
@@ -52,127 +61,83 @@ void Server::start() {
         // check if there is enough space for another client
         if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
 
-        int rc = pthread_create(&clientsThreads[numberOfConnectedClients], NULL
-                , communicateWithClient, (void *)clientSocket);
+            pthread_t *currentThread = new pthread_t();
+            vectorThreads.push_back(currentThread);
 
-        // check if the thread is valid
-        if (rc) {
-            cout << "Error: unable to create thread, " << rc << endl;
-            exit(-1);
+            struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
+            clientSocketAndServer->server = this;
+            clientSocketAndServer->clientSocket = clientSocket;
+            clientSocketAndServer->threadID = currentThread;
+
+            int rc = pthread_create(currentThread, NULL, communicateWithClient,
+                                    (void *) clientSocketAndServer);
+
+            // check if the thread is valid
+            if (rc) {
+                cout << "Error: unable to create thread, " << rc << endl;
+                exit(-1);
+            }
         }
-
-        numberOfConnectedClients++; // increment the number of clients for the current one.
-        }
-
-
-        /*giveClientPriority(clientSocket1, clientSocket2); // inform the client's priority
-
-        while (true) { // Play the game with 2 players
-
-            if (handleClient(clientSocket1, clientSocket2, 1) != 1)
-                break;
-            if (handleClient(clientSocket2, clientSocket1, 2) != 1)
-                break;
-        }
-*/
 
     } // end of listening to clients
 
 }
 
-void * Server :: communicateWithClient(void *socket) {
-    int clientSocket = (int) socket;
+void *communicateWithClient(void *args) {
+    struct ClientSocketAndServer *clientSocketAndServer = (struct ClientSocketAndServer *) args;
+    int currentClientSocket = clientSocketAndServer->clientSocket;
+    Server *server = clientSocketAndServer->server;
+    pthread_t *current_thread = clientSocketAndServer->threadID;
+
+    pthread_mutex_lock(&mutex_lock);
+    server->numberOfConnectedClients++; // increment the number of clients for the current one.
+    pthread_mutex_unlock(&mutex_lock);
+
     while (true) {
-        int stringLength, n;
-        n = (int) read(clientSocket, &stringLength, sizeof(int));
+        unsigned long stringLength;
+        int n;
+        n = (int) read(currentClientSocket, &stringLength, sizeof(stringLength));
+        if (n == -1)
+            throw "Error reading string length";
 
         char *command = new char[stringLength];
         for (int i = 0; i < stringLength; i++) {
-            n = (int) read(clientSocket, &command[i], sizeof(char));
+            n = (int) read(currentClientSocket, &command[i], sizeof(char));
             if (n == -1)
                 throw "Error reading message!";
         }
+        command[stringLength] = '\0';
         string strCommand(command);
-        delete(command);
+        delete (command);
 
-        commandManager.executeCommand(strCommand, clientSocket);
+        pthread_mutex_lock(&mutex_lock);
+        server->getCommandManager()->executeCommand(strCommand, currentClientSocket);
+        pthread_mutex_unlock(&mutex_lock);
+
+        if (server->shouldThreadDie(strCommand)) // if the command was start, stop the loop and delete the thread
+            break;
+
+        if (server->shouldThreadRunGame(strCommand)) { // if the command was join, the thread will now handle the game
+            Room *gameRoom = server->getRoomFromCommand(strCommand); // find the current game room
+            HandleGame currentGame(*gameRoom, *(server->getCommandManager()), mutex_lock);
+            currentGame.handle2ClientsGame();
+
+            pthread_mutex_lock(&mutex_lock);
+            server->numberOfConnectedClients -= 2;
+            pthread_mutex_unlock(&mutex_lock);
+
+            break;
+        }
     }
-
-}
-
-// Handle requests from a specific client
-int Server::handleClient(int clientSocketSrc, int clientSocketDst, int srcPriority) {
-    int xValue, yValue;
-
-    // Read new move arguments from Src client.
-    int n = read(clientSocketSrc, &xValue, sizeof(xValue));
-    if (n == -1)
-        throw "Error reading x value from Src client";
-
-    if (n == 0) {
-        cout << "Client disconnected" << endl;
-        return -1;
-    }
-    if (xValue == -1) {
-        cout << "Client " << srcPriority << " didn't played" << endl;
-        n = write(clientSocketDst, &xValue, sizeof(xValue));
-        if (n == -1)
-            throw "Can't write no possible moves to Dst client";
-
-        return 1;
-    }
-
-    // -2 signify signal to close all the connections if the game ended
-    if (xValue == -2) {
-        int winner = 3 - srcPriority; // Calculate the winner priority
-        cout << "End of game! The winner is: Player #" << winner << endl;
-        close(clientSocketSrc);
-        close(clientSocketDst);
-        return 0; // return 0 to signify end of game
-    }
-
-    // Get the y value
-    n = read(clientSocketSrc, &yValue, sizeof(yValue));
-    if (n == -1)
-        throw "Error reading y value from Src client";
-
-    cout << "Got move: " << (xValue + 1) << ", " << (yValue + 1) <<
-                                                                       " From Player #" << srcPriority << endl;
-    // Write back to the other client.
-    n = write(clientSocketDst, &xValue, sizeof(xValue));
-    if (n == -1)
-        throw "Error writing x value back to Dst client";
-
-    n = write(clientSocketDst, &yValue, sizeof(yValue));
-    if (n == -1)
-        throw "Error reading y value from Dst client";
-
-    return 1;
+    server->deleteThread(current_thread); // delete the thread from the threads vector
+    delete (clientSocketAndServer);
 }
 
 void Server::stop() {
     close(serverSocket);
 }
 
-void Server::giveClientPriority(int socket1, int socket2) {
-    // Write the priority of the #1 client
-    int priority1 = 1;
-    int n1 = write(socket1, &priority1, sizeof(priority1));
-    if (n1 == -1) {
-        cout << "Error writing to #1 socket" << endl;
-        return;
-    }
-
-    // Write the priority of the #2 client
-    int priority2 = 2;
-    n1 = write(socket2, &priority2, sizeof(priority2));
-    if (n1 == -1) {
-        cout << "Error writing to #2 socket" << endl;
-        return;
-    }
-}
-
-int Server :: getPortFromFile(string fileName) {
+int Server::getPortFromFile(string fileName) {
     try {
         const char *serverSettingsFileName = fileName.c_str();
         ifstream fileInput(serverSettingsFileName);
@@ -186,9 +151,85 @@ int Server :: getPortFromFile(string fileName) {
         int port = 0;
         stringstream1 >> port;
         return port;
-    } catch (char* ex) {
+    } catch (char *ex) {
         cout << "error while reading settings file";
         exit(-1);
     }
 }
 
+bool Server::shouldThreadDie(string command) {
+    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
+    string explicitCommand = command.substr(0, firstSpaceOccurrence);
+    string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
+
+    if (strcmp(explicitCommand.c_str(), "start") == 0) {
+        pthread_mutex_lock(&mutex_lock);
+        for (int i = 0; i < rooms.size(); ++i) {
+            Room currentRoom = *rooms.at(i); // assign the current room
+            // check if there is room with that name
+            if (strcmp(currentRoom.roomName.c_str(), roomName.c_str()) == 0) {
+                pthread_mutex_unlock(&mutex_lock);
+                return true;
+            }
+        }
+        pthread_mutex_unlock(&mutex_lock);
+    }
+    return false;
+}
+
+Server::~Server() {
+    delete (commandManager);
+}
+
+CommandManager *Server::getCommandManager() const {
+    return commandManager;
+}
+
+bool Server::shouldThreadRunGame(string command) {
+    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
+    string explicitCommand = command.substr(0, firstSpaceOccurrence);
+    string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
+
+    if (strcmp(explicitCommand.c_str(), "join") == 0) {
+        pthread_mutex_lock(&mutex_lock);
+        for (int i = 0; i < rooms.size(); ++i) {
+            Room currentRoom = *rooms.at(i); // assign the current room
+            // check if there is room with that name and if that room is occupied with 2 players
+            if (strcmp(currentRoom.roomName.c_str(), roomName.c_str()) == 0 && currentRoom.isRunning) {
+                pthread_mutex_unlock(&mutex_lock);
+                return true;
+            }
+        }
+        pthread_mutex_unlock(&mutex_lock);
+    }
+    return false;
+}
+
+Room *Server::getRoomFromCommand(string command) {
+    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
+    string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
+
+    pthread_mutex_lock(&mutex_lock);
+    for (int i = 0; i < rooms.size(); ++i) {
+        Room *currentRoom = rooms.at(i); // assign the current room
+        if (strcmp(currentRoom->roomName.c_str(), roomName.c_str()) == 0 && currentRoom->isRunning) {
+            pthread_mutex_unlock(&mutex_lock);
+            return currentRoom;
+        }
+    }
+    pthread_mutex_unlock(&mutex_lock);
+    return NULL;
+}
+
+void Server::deleteThread(pthread_t *threadToDelete) {
+    pthread_mutex_lock(&mutex_lock);
+    for(vector<pthread_t *>::iterator it = vectorThreads.begin(); it != vectorThreads.end(); ++it) {
+        if ((*it) == threadToDelete) {
+            vectorThreads.erase(it);
+            delete(threadToDelete);
+            pthread_mutex_unlock(&mutex_lock);
+            return;
+        }
+    }
+    pthread_mutex_unlock(&mutex_lock);
+}

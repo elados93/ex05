@@ -12,18 +12,22 @@
 
 using namespace std;
 
-typedef struct SocketAndInformation {
-    int socket;
+class Command;
+
+struct SocketAndInformation {
+    int socketSrc;
+    int socketDst;
     string information;
-    vector &rooms<Room*>;
+    vector <struct Room*>*rooms;
+    Room* roomToDelete;
 };
 
 class CommandManager {
 public:
-    CommandManager(vector <Room*> &room);
+    CommandManager(vector <struct Room*> &room);
     ~CommandManager();
 
-    void executeCommand(string command, int socket);
+    void executeCommand(string command, int socketSrc, int socketDst = 0, Room* roomToDelete = NULL);
 
 private:
     map<string, Command *> mapCommands;

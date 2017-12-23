@@ -10,7 +10,11 @@
 
 class PlayCommand : public  Command {
 public:
-    virtual void execute(void * args);
+    PlayCommand();
+    virtual void execute(SocketAndInformation *args);
+
+private:
+    //int getTheOtherSocket(vector<struct Room*> &rooms, int socket);
 };
 
 

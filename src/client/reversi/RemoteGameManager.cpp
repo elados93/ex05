@@ -16,11 +16,11 @@ RemoteGameManager::RemoteGameManager(GameState &gameState, Player &player1, Play
                     printer, gameRules, false), clientDetails(client1) {}
 
 void RemoteGameManager::run() {
-    status status1 = checkStatus();
+    status currentStatus = checkStatus();
 
-    while (status1 == RUNNING) {
+    while (currentStatus == RUNNING) {
         playOneTurn();
-        status1 = checkStatus();
+        currentStatus = checkStatus();
     }
 
     printer.printBoard();
@@ -30,28 +30,33 @@ void RemoteGameManager::run() {
     owner currentOwner = currentPlayer == &player1 ? PLAYER_1 : PLAYER_2;
     if (checkStatus() == WIN) {
         if (winner == PLAYER_1)
-            printer.printEndOfGame(player1, status1);
+            printer.printEndOfGame(player1, currentStatus);
         if (winner == PLAYER_2)
-            printer.printEndOfGame(player2, status1);
+            printer.printEndOfGame(player2, currentStatus);
     }
 
-    if (status1 == DRAW)
+    if (currentStatus == DRAW)
         printer.printEndOfGame(player1, DRAW);
 
     // Get any key to terminate the game
     string dummy;
     getline(cin, dummy);
 
-    // The looser needs to send the END OF GAME message
-    if (currentOwner != winner) {
-        int stopGame = -2;
-        int socket = clientDetails.getClientSocket();
-        int n = write(socket, &stopGame, sizeof(stopGame));
-        if (n == -1)
-            throw "Error sending end of game to server";
+    // if there was a draw, only one player will send the close command
+    if (currentStatus == DRAW && currentOwner == PLAYER_1) {
+        string closeCommand = "close ";
+        clientDetails.writeToServer(closeCommand);
     }
 
-    delete (lastMove);
+
+    // The looser needs to send the close message, the winner already knows he won
+    if (currentStatus == WIN && currentOwner != winner) {
+        string closeCommand = "close ";
+        clientDetails.writeToServer(closeCommand);
+    }
+
+    if (lastMove != NULL)
+        delete (lastMove);
 }
 
 void RemoteGameManager::playOneTurn() {
@@ -94,7 +99,7 @@ void RemoteGameManager::playOneTurn() {
         if (currentOwner == PLAYER_2) {
             printer.printWaitingForOtherPlayer(currentOwner);
             // updating the board according the other players move
-            if (translatePointFromServer() == 1) {
+            if (verifyPoint() == 1) {
                 gameRules.makeMove(gameState, *lastMove, otherOwner);
                 gameRules.makePossibleMoves(gameState, currentOwner);
                 printer.printBoard(); // print the board after the changes of player1
@@ -114,7 +119,7 @@ void RemoteGameManager::playOneTurn() {
     else {
         // a regular move in which we update the board first and than play by the current player.
         printer.printWaitingForOtherPlayer(currentOwner);
-        if (translatePointFromServer() == -1) {
+        if (verifyPoint() == -1) {
             // In case the game end after the opponent move.
             if (checkStatus() != RUNNING)
                 return;
@@ -124,8 +129,6 @@ void RemoteGameManager::playOneTurn() {
             if (checkStatus() != RUNNING)
                 return;
         } // The other player played something
-        
-        
         
         printer.printBoard(); // print the board after the changes of player1
 
@@ -166,19 +169,13 @@ void RemoteGameManager::setCurrentPlayer(int playerNumber) {
         currentPlayer = &player2;
 }
 
-int RemoteGameManager::translatePointFromServer() {
-
-    int xValue, yValue;
-    int socket = clientDetails.getClientSocket();
-
-    // Read new move arguments from Src client.
-    int n = read(socket, &xValue, sizeof(xValue));
-    if (n == -1)
-        throw "Error reading x value from Src client";
-
+int RemoteGameManager::verifyPoint() {
+    Point *p = clientDetails.translatePointFromServer();
+    int x = p->getX();
+    int y = p->getY();
+    delete(p);
     // -1 meaning the player has no moves.
-    if (xValue == -1) {
-
+    if (x == -1 && y == -1) {
         if (lastMove != NULL)
             delete (lastMove);
 
@@ -186,16 +183,10 @@ int RemoteGameManager::translatePointFromServer() {
         return -1;
     }
 
-    // Get the y value
-    n = read(socket, &yValue, sizeof(yValue));
-    if (n == -1)
-        throw "Error reading y value from Src client";
-
     if (lastMove != NULL)
         delete (lastMove);
 
-    
-    lastMove = new Point(xValue, yValue);
+    lastMove = new Point(x, y);
     return 1;
 }
 
@@ -216,10 +207,10 @@ Client * getClientFromFile(string fileName) {
         stringstream stringstream1(portString);
         int port = 0;
         stringstream1 >> port;
-        char *writable = new char[IPString.size() + 1];
-        std::copy(IPString.begin(), IPString.end(), writable);
-        writable[IPString.size()] = '\0';
-        return new Client(writable, port);
+        char *serverIP = new char[IPString.size() + 1];
+        std::copy(IPString.begin(), IPString.end(), serverIP);
+        serverIP[IPString.size()] = '\0';
+        return new Client(serverIP, port);
     } catch (char* ex) {
         cout << "error while reading settings file";
         exit(-1);

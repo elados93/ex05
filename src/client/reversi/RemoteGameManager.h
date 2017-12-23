@@ -41,14 +41,7 @@ private:
 
     Client clientDetails;
 
-    /**
-     * this function reads 2 integers from the server and translate it to a real move on the board.
-     * playOneTurn func will execute the move.
-     * Point lastMove - is getting update by the move of the other player.
-     * @return 1 if reading a point was a success, or -1 in case the other client had no moves.
-     */
-    int translatePointFromServer();
-
+    int verifyPoint();
 };
 
 

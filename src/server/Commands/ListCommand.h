@@ -10,7 +10,8 @@
 
 class ListCommand : public Command {
 public:
-    virtual void execute(SocketAndInformation args);
+    ListCommand();
+    virtual void execute(SocketAndInformation *args);
 };
 
 

@@ -8,7 +8,7 @@
 void Command::sendFeedbackToClient(string request, int clientSocket) {
     unsigned long sLen = request.length();
     int n;
-    n = (int) write(clientSocket, &sLen, sizeof(int));
+    n = (int) write(clientSocket, &sLen, sizeof(sLen));
     if (n == -1)
         throw "Error writing string length!";
     for (int i = 0; i < sLen; i++) {

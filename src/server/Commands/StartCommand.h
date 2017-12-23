@@ -11,7 +11,9 @@
 
 class StartCommand : public Command {
 public:
-    virtual void execute(SocketAndInformation details);
+    StartCommand();
+
+    virtual void execute(SocketAndInformation *args);
 };
 
 

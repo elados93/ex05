@@ -9,7 +9,7 @@
 #include "Command.h"
 class CloseCommand : public Command {
 public:
-    virtual void execute(void * args);
+    virtual void execute(SocketAndInformation *args);
 };
 
 

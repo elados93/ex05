@@ -7,6 +7,7 @@
 #define EX04_CLIENT_H
 
 #include <iostream>
+#include <Point.h>
 
 using namespace std;
 
@@ -38,14 +39,23 @@ public:
 
     void handleBeforeGame();
 
+    /**
+    * this function reads 2 integers from the server and translate it to a real move on the board.
+    * playOneTurn func will execute the move.
+    * Point lastMove - is getting update by the move of the other player.
+    * @return 1 if reading a point was a success, or -1 in case the other client had no moves.
+    */
+    Point *translatePointFromServer();
+    void writeToServer(string request);
+
     int priority;
 private:
     const char *serverIP;
     int serverPort;
     int clientSocket;
 
-    void writeToServer(string request);
     string readFromServer();
+    string translateDetails(string s); // trim the first word from th string s
 };
 
 

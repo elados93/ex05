@@ -13,7 +13,7 @@ using namespace std;
 
 class Command {
 public:
-    virtual void execute(SocketAndInformation args) = 0;
+    virtual void execute(struct SocketAndInformation *args) = 0;
     virtual ~Command() {};
 
     void sendFeedbackToClient(string request, int clientSocket);

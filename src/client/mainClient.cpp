@@ -19,7 +19,7 @@ using namespace std;
 
 int main() {
 
-    Board *board = new Board();
+    Board *board = new Board(4, 4); // ##%%366363CHANGE BACK!!#!@$!%^*%(%*%&#%!~
     GameState gameState1(board);
     ReversiDefaultRules *gameRules = new ReversiDefaultRules();
 
@@ -32,9 +32,9 @@ int main() {
     delete (menuConsole);
 
     int inputAIGameOrNot;
-    cin >> inputAIGameOrNot;
+    //cin >> inputAIGameOrNot;
 
-    switch (inputAIGameOrNot) {
+    switch (3) { // ##%%366363CHANGE BACK!!#!@$!%^*%(%*%&#%!~
         case 1: {
             ConsolePrinter printer1(*board, p1, p3);
             GameManager game1(gameState1, p1, p3, printer1, *gameRules, false);
@@ -57,7 +57,6 @@ int main() {
                 return 0;
             }
             ConsolePrinter printer3(*board, p1, p3);
-
             client->handleBeforeGame();
 
             int priorityClient = client->getPriority();
@@ -66,7 +65,6 @@ int main() {
             game3.setCurrentPlayer(priorityClient);
 
             game3.run();
-            delete(client);
             break;
         }
 

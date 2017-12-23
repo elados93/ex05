@@ -5,17 +5,20 @@
 
 #include "StartCommand.h"
 
-void StartCommand::execute(SocketAndInformation details) {
+StartCommand::StartCommand() {}
 
+
+void StartCommand::execute(SocketAndInformation *details) {
+    
     Room *room = new Room();
-    room->socket1 = details.socket; // This is the room creator socket
-    room->socket2 = NULL; // Here will be the client who will join the room
+    room->socket1 = details->socketSrc; // This is the room creator socket
+    room->socket2 = -1; // Here will be the client who will join the room, -1 as NULL
     room->isRunning = false; // The game didn't start yet
-    room->roomName = details.information; // Set the HAKALMARIM room
+    room->roomName = details->information; // Set the hakalmarim room
 
-    details.rooms.push_back(room);
+    details->rooms->push_back(room);
 
     // inform the client the room was created
     string feedBackToClient = "Started";
-    sendFeedbackToClient(feedBackToClient, details.socket);
+    sendFeedbackToClient(feedBackToClient, details->socketSrc);
 }
