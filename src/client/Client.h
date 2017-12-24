@@ -32,11 +32,6 @@ public:
      */
     int getPriority();
 
-    /**
-     * @return the specific client socket
-     */
-    int getClientSocket() const;
-
     void handleBeforeGame();
 
     /**

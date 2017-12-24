@@ -23,6 +23,8 @@ void HandleGame::handle2ClientsGame() {
         if (handleClient(socket2, socket1) != 1)
             break;
     }
+    close(socket1);
+    close(socket2);
 }
 
 // Handle requests from a specific client
@@ -46,7 +48,7 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
 
     string explicitCommand = extractCommand(strCommand);
     if(!checkValidCommand(explicitCommand)){
-        cout << " this is not a valid move!" << endl;
+        cout << "This is not a valid move!" << endl;
     }
 
     if (strcmp(explicitCommand.c_str(), "close") == 0) {
@@ -68,9 +70,7 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
 
 bool HandleGame::checkValidCommand(string s) {
     string command = extractCommand(s);
-    if (strcmp(command.c_str(), "play") == 0 || strcmp(command.c_str(),"close"))
-        return true;
-    return false;
+    return strcmp(command.c_str(), "play") == 0 || strcmp(command.c_str(), "close") == 0;
 }
 
 string HandleGame::extractCommand(string s) {

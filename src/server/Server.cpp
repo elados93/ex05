@@ -15,6 +15,8 @@ pthread_mutex_t mutex_lock;
 using namespace std;
 
 void *communicateWithClient(void *args);
+void *acceptClients(void *args);
+
 
 struct ClientSocketAndServer {
     Server *server;
@@ -43,43 +45,30 @@ void Server::start() {
     *) &serverAddress, sizeof(serverAddress)) == -1)
         throw "Error on binding";
 
-    // Start listening to incoming connections
-    listen(serverSocket, MAX_CONNECTED_CLIENTS);
-    // Define the client socket's structures
-    struct sockaddr_in clientAddress;
-    socklen_t clientAddressLen;
+    // create a thread that will accept clients
+    Server *pointerToServer = this;
+    pthread_t *acceptClientsThread = new pthread_t();
+    int rc1 = pthread_create(acceptClientsThread, NULL, acceptClients,
+                            (void *) pointerToServer);
+    // check if the thread is valid
+    if (rc1) {
+        cout << "Error: unable to create thread, " << rc1 << endl;
+        exit(-1);
+    }
 
+    // check if there was an exit command
     while (true) {
-        cout << "Waiting for client..." << endl;
-        // Accept a new client connection
-        int clientSocket = accept(serverSocket, (struct
-                sockaddr *) &clientAddress, &clientAddressLen);
-        cout << "Client connected" << endl;
-        if (clientSocket == -1)
-            throw "Error on accept client #1";
-
-        // check if there is enough space for another client
-        if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
-
-            pthread_t *currentThread = new pthread_t();
-            vectorThreads.push_back(currentThread);
-
-            struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
-            clientSocketAndServer->server = this;
-            clientSocketAndServer->clientSocket = clientSocket;
-            clientSocketAndServer->threadID = currentThread;
-
-            int rc = pthread_create(currentThread, NULL, communicateWithClient,
-                                    (void *) clientSocketAndServer);
-
-            // check if the thread is valid
-            if (rc) {
-                cout << "Error: unable to create thread, " << rc << endl;
-                exit(-1);
-            }
+        string command;
+        getline(cin, command);
+        if (strcmp(command.c_str(), "exit") == 0) {
+            int cancelFeedback = pthread_cancel(*acceptClientsThread);
+            if (cancelFeedback != 0) // check cancel function
+                throw "Could not stop the accepting clients thread!";
+            delete(acceptClientsThread);
+            stop();
+            break;
         }
-
-    } // end of listening to clients
+    }
 
 }
 
@@ -117,7 +106,8 @@ void *communicateWithClient(void *args) {
         if (server->shouldThreadDie(strCommand)) // if the command was start, stop the loop and delete the thread
             break;
 
-        if (server->shouldThreadRunGame(strCommand)) { // if the command was join, the thread will now handle the game
+        if (server->shouldThreadRunGame(strCommand,
+                                        currentClientSocket)) { // if the command was join, the thread will now handle the game
             Room *gameRoom = server->getRoomFromCommand(strCommand); // find the current game room
             HandleGame currentGame(*gameRoom, *(server->getCommandManager()), mutex_lock);
             currentGame.handle2ClientsGame();
@@ -133,8 +123,55 @@ void *communicateWithClient(void *args) {
     delete (clientSocketAndServer);
 }
 
+void *acceptClients(void *args) {
+    Server server = *((Server *)args);
+    int serverSocket = server.getServerSocket();
+    int numberOfConnectedClients = server.getNumberOfConnectedClients();
+    vector <pthread_t *> vectorThreads = server.getVectorThreads();
+
+    // Start listening to incoming connections
+    listen(serverSocket, MAX_CONNECTED_CLIENTS);
+    // Define the client socket's structures
+    struct sockaddr_in clientAddress;
+    socklen_t clientAddressLen;
+    while (true) {
+
+        cout << "Waiting for client..." << endl;
+        // Accept a new client connection
+        int clientSocket = accept(serverSocket, (struct
+                sockaddr *) &clientAddress, &clientAddressLen);
+        cout << "Client connected" << endl;
+        if (clientSocket == -1)
+            throw "Error on accept client #1";
+
+        // check if there is enough space for another client
+        if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
+
+            pthread_t *currentThread = new pthread_t();
+            vectorThreads.push_back(currentThread);
+
+            struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
+            clientSocketAndServer->server = (Server *)args;
+            clientSocketAndServer->clientSocket = clientSocket;
+            clientSocketAndServer->threadID = currentThread;
+
+            int rc2 = pthread_create(currentThread, NULL, communicateWithClient,
+                                     (void *) clientSocketAndServer);
+
+            // check if the thread is valid
+            if (rc2) {
+                cout << "Error: unable to create thread, " << rc2 << endl;
+                exit(-1);
+            }
+        }
+
+    } // end of listening to clients
+}
+
+
 void Server::stop() {
-    close(serverSocket);
+    closeAllUnActive();
+    pthread_exit(NULL);
 }
 
 int Server::getPortFromFile(string fileName) {
@@ -185,7 +222,7 @@ CommandManager *Server::getCommandManager() const {
     return commandManager;
 }
 
-bool Server::shouldThreadRunGame(string command) {
+bool Server::shouldThreadRunGame(string command, int mySocket) {
     unsigned long firstSpaceOccurrence = command.find_first_of(' ');
     string explicitCommand = command.substr(0, firstSpaceOccurrence);
     string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
@@ -195,7 +232,8 @@ bool Server::shouldThreadRunGame(string command) {
         for (int i = 0; i < rooms.size(); ++i) {
             Room currentRoom = *rooms.at(i); // assign the current room
             // check if there is room with that name and if that room is occupied with 2 players
-            if (strcmp(currentRoom.roomName.c_str(), roomName.c_str()) == 0 && currentRoom.isRunning) {
+            if (strcmp(currentRoom.roomName.c_str(), roomName.c_str()) == 0 && currentRoom.isRunning
+                && currentRoom.socket2 == mySocket) {
                 pthread_mutex_unlock(&mutex_lock);
                 return true;
             }
@@ -223,13 +261,34 @@ Room *Server::getRoomFromCommand(string command) {
 
 void Server::deleteThread(pthread_t *threadToDelete) {
     pthread_mutex_lock(&mutex_lock);
-    for(vector<pthread_t *>::iterator it = vectorThreads.begin(); it != vectorThreads.end(); ++it) {
+    for (vector<pthread_t *>::iterator it = vectorThreads.begin(); it != vectorThreads.end(); ++it) {
         if ((*it) == threadToDelete) {
             vectorThreads.erase(it);
-            delete(threadToDelete);
+            delete (threadToDelete);
             pthread_mutex_unlock(&mutex_lock);
             return;
         }
     }
     pthread_mutex_unlock(&mutex_lock);
+}
+
+int Server::getNumberOfConnectedClients() const {
+    return numberOfConnectedClients;
+}
+
+int Server::getServerSocket() const {
+    return serverSocket;
+}
+
+const vector<pthread_t *> &Server::getVectorThreads() const {
+    return vectorThreads;
+}
+
+void Server::closeAllUnActive() {
+    for(vector<struct Room*>::iterator it = rooms.begin(); it != rooms.end(); ++it) {
+        if (!(*it)->isRunning) {
+            close((*it)->socket1);
+            rooms.erase(it);
+        }
+    }
 }

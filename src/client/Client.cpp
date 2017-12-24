@@ -89,10 +89,6 @@ int Client::getPriority() {
     return priority;
 }
 
-int Client::getClientSocket() const {
-    return clientSocket;
-}
-
 Client::~Client() {
     delete(serverIP);
 }
@@ -154,6 +150,7 @@ string Client::readFromServer() {
         if (n == -1)
             throw "Error reading message!";
     }
+    command[stringLength] = '\0';
     string strCommand(command);
     delete(command);
     return strCommand;

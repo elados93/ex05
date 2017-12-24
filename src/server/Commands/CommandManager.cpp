@@ -21,7 +21,7 @@ CommandManager::CommandManager(vector <Room*> &room) : games(room) {
 CommandManager::~CommandManager() {
     map<string, Command *>::iterator it;
     for (it = mapCommands.begin(); it != mapCommands.end(); it++)
-        delete it->second; // Delete the command allocation
+        delete (it->second); // Delete the command allocation
 }
 
 void CommandManager::executeCommand(string command, int socketSrc, int socketDst, Room* roomToDelete) {

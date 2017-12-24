@@ -12,7 +12,7 @@ void JoinCommand::execute(SocketAndInformation *args) {
     int roomIndex = -1;
     for (int i = 0; i < args->rooms->size(); ++i) {
         Room *currentRoom = args->rooms->at(i);
-        if (strcmp(currentRoom->roomName.c_str(), args->information.c_str()) == 0) {
+        if (strcmp(currentRoom->roomName.c_str(), args->information.c_str()) == 0 && !currentRoom->isRunning) {
             roomIndex = i;
             break;
         }

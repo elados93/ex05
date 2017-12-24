@@ -19,6 +19,9 @@ public:
      * @param args is the name of the room to be opened.
      */
     virtual void execute(SocketAndInformation *args);
+
+private:
+    bool checkIfRoomAlreadyExists(vector<Room*> &rooms, string name);
 };
 
 

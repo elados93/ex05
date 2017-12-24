@@ -59,9 +59,10 @@ public:
      * checks if the last command of the client was to join to a valid room, and if so, starting a valid game room
      * on the thread of the joining client.
      * @param command is the join command if true.
+     * @param mySocket the socket of the current player.
      * @return true or false.
      */
-    bool shouldThreadRunGame(string command);
+    bool shouldThreadRunGame(string command, int mySocket);
 
     /**
      * loop throught the vector of rooms and checks for a specific room, comming from the command param.
@@ -80,12 +81,22 @@ public:
      * @param threadToDelete
      */
     void deleteThread(pthread_t *threadToDelete);
+
+    int getNumberOfConnectedClients() const;
+
+    int getServerSocket() const;
+
+    const vector<pthread_t *> &getVectorThreads() const;
+
+
 private:
     int port;
     int serverSocket; // the socket's file descriptor
     CommandManager *commandManager;
     vector <pthread_t *> vectorThreads;
     vector <struct Room*>rooms;
+
+    void closeAllUnActive();
 };
 
 #endif //EX04_SERVER_H
