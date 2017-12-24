@@ -54,7 +54,9 @@ private:
     int serverPort;
     int clientSocket;
 
+    bool checkCommandValidation(string s);
     string readFromServer();
+    string translateCommand(string s); // trim the command
     string translateDetails(string s); // trim the first word from th string s
 };
 

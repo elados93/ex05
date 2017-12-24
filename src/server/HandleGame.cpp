@@ -44,8 +44,10 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
     string strCommand(moveFromSrc);
     delete (moveFromSrc);
 
-    unsigned long firstSpaceOccurrence = strCommand.find_first_of(' ');
-    string explicitCommand = strCommand.substr(0, firstSpaceOccurrence); // extract
+    string explicitCommand = extractCommand(strCommand);
+    if(!checkValidCommand(explicitCommand)){
+        cout << " this is not a valid move!" << endl;
+    }
 
     if (strcmp(explicitCommand.c_str(), "close") == 0) {
         strCommand.append(room.roomName);
@@ -62,4 +64,16 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
     pthread_mutex_unlock(&mutexLock);
 
     return 1; // return 1 as a successful move operation
+}
+
+bool HandleGame::checkValidCommand(string s) {
+    string command = extractCommand(s);
+    if (strcmp(command.c_str(), "play") == 0 || strcmp(command.c_str(),"close"))
+        return true;
+    return false;
+}
+
+string HandleGame::extractCommand(string s) {
+    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
+    return s.substr(0, firstSpaceOccurrence); // extract
 }

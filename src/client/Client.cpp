@@ -103,6 +103,12 @@ void Client::handleBeforeGame() {
 
         // getline(cin, request); // gets dummy before input
         getline(cin, request); // get the request from client
+
+        if(!checkCommandValidation(request)){
+            cout << "This is not a valid request!" << endl;
+            continue;
+        }
+
         writeToServer(request); // send the request to the server
 
         string serverFeedback = readFromServer();
@@ -174,3 +180,18 @@ string Client::translateDetails(string s) {
     unsigned long firstSpaceOccurrence = s.find_first_of(' ');
     return s.substr(firstSpaceOccurrence + 1, s.length());
 }
+
+string Client::translateCommand(string s) {
+    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
+    return s.substr(0, firstSpaceOccurrence);
+}
+
+bool Client::checkCommandValidation(string s) {
+    string command = translateCommand(s);
+    if(strcmp(command.c_str(), "start") == 0 || strcmp(command.c_str(), "list_games") == 0
+            || strcmp(command.c_str(), "join") == 0)
+        return true;
+    return false;
+}
+
+

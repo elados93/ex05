@@ -28,6 +28,9 @@ private:
      * @return 1 if the info was transfered correctly. 0 is the game is over.
      */
     int handleClient(int clientSocketSrc, int clientSocketDsc);
+    string extractCommand(string s);
+    bool checkValidCommand(string s);
+
 };
 
 
