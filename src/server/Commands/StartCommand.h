@@ -13,6 +13,11 @@ class StartCommand : public Command {
 public:
     StartCommand();
 
+    /**
+     * the execute command of the start opens a room and update the client socket.
+     * it sends a massage to the handleBeforeGame function in client that a start command occured.
+     * @param args is the name of the room to be opened.
+     */
     virtual void execute(SocketAndInformation *args);
 };
 

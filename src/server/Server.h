@@ -34,17 +34,51 @@ public:
 
     void start();
     void stop();
-
+    /**
+     * this function get the information of the port.
+     * @param fileName is the name of the file
+     * @return the port nunmber.
+     */
     static int getPortFromFile(string fileName);
 
+    /**
+     * make an accuess to the map of commands allowed to the clients.
+     * @return the command manager.
+     */
     CommandManager *getCommandManager() const;
+
+    /**
+     * checks if the last command of the client was to create a room and after making the room close the
+     * thread of this specific client.
+     * @param command is the start command that verify if we can close this thread
+     * @return true or false.
+     */
     bool shouldThreadDie(string command);
+
+    /**
+     * checks if the last command of the client was to join to a valid room, and if so, starting a valid game room
+     * on the thread of the joining client.
+     * @param command is the join command if true.
+     * @return true or false.
+     */
     bool shouldThreadRunGame(string command);
 
+    /**
+     * loop throught the vector of rooms and checks for a specific room, comming from the command param.
+     * @param command is the room itself.
+     * @return the pointer to the room.
+     */
     Room* getRoomFromCommand(string command);
 
+    /**
+     * public member that make sure we are in the limit of the max client connected.
+     */
     int numberOfConnectedClients;
 
+    /**
+     * delete a current thread running in case of starting a room or finishing a game.
+     * @param threadToDelete
+     */
     void deleteThread(pthread_t *threadToDelete);
 private:
     int port;

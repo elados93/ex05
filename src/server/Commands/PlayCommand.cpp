@@ -12,8 +12,8 @@ PlayCommand::PlayCommand() {}
 void PlayCommand::execute(SocketAndInformation *args) {
     
     unsigned long firstSpaceOccurrence = args->information.find_first_of(' ');
-    string xString(args->information.substr(0 , firstSpaceOccurrence));
-    string yString(args->information.substr(firstSpaceOccurrence + 1, args->information.length()));
+    string xString(args->information.substr(0 , firstSpaceOccurrence)); //this is the x val in string representation
+    string yString(args->information.substr(firstSpaceOccurrence + 1, args->information.length())); //this is the y val in string representation
 
     int x, y, n;
     stringstream xStream(xString), yStream(yString);

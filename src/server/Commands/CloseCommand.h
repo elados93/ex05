@@ -9,6 +9,13 @@
 #include "Command.h"
 class CloseCommand : public Command {
 public:
+
+    /**
+     * the execute command of the close loop thrught the list of rooms and delete the room.
+     * it does not! delete the thread
+     * it also update the vector of rooms.
+     * @param args is the name of the room to be deleted.
+     */
     virtual void execute(SocketAndInformation *args);
 };
 
