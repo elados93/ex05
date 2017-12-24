@@ -14,7 +14,7 @@ pthread_mutex_t mutex_lock;
 
 using namespace std;
 
-void *communicateWithClient(void *clientSocketAndServer);
+void *communicateWithClient(void *args);
 
 struct ClientSocketAndServer {
     Server *server;
