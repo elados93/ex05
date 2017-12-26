@@ -64,8 +64,8 @@ void Server::start() {
             int cancelFeedback = pthread_cancel(*acceptClientsThread);
             if (cancelFeedback != 0) // check cancel function
                 throw "Could not stop the accepting clients thread!";
-            delete(acceptClientsThread);
             stop();
+            delete(acceptClientsThread);
             break;
         }
     }
@@ -103,8 +103,15 @@ void *communicateWithClient(void *args) {
         server->getCommandManager()->executeCommand(strCommand, currentClientSocket);
         pthread_mutex_unlock(&mutex_lock);
 
-        if (server->shouldThreadDie(strCommand)) // if the command was start, stop the loop and delete the thread
+        if (server->shouldThreadDie(strCommand)) { // if the command was start or list_games, stop the loop and delete the thread
+            if (strcmp(strCommand.c_str(), "list_games") == 0) { // for list_games command close the socket 
+                close(currentClientSocket);
+                pthread_mutex_lock(&mutex_lock);
+                server->numberOfConnectedClients --;
+                pthread_mutex_unlock(&mutex_lock);
+            }
             break;
+        }
 
         if (server->shouldThreadRunGame(strCommand,
                                         currentClientSocket)) { // if the command was join, the thread will now handle the game
@@ -124,10 +131,10 @@ void *communicateWithClient(void *args) {
 }
 
 void *acceptClients(void *args) {
-    Server server = *((Server *)args);
-    int serverSocket = server.getServerSocket();
-    int numberOfConnectedClients = server.getNumberOfConnectedClients();
-    vector <pthread_t *> vectorThreads = server.getVectorThreads();
+    Server *server = (Server *)args;
+    int serverSocket = server->getServerSocket();
+    int numberOfConnectedClients = server->getNumberOfConnectedClients();
+    vector <pthread_t *> vectorThreads = server->getVectorThreads();
 
     // Start listening to incoming connections
     listen(serverSocket, MAX_CONNECTED_CLIENTS);
@@ -170,8 +177,13 @@ void *acceptClients(void *args) {
 
 
 void Server::stop() {
-    closeAllUnActive();
-    pthread_exit(NULL);
+    closeAllRooms();
+    while (true) {
+        if (rooms.empty()) {
+            break;
+        }
+    }
+    close(serverSocket);
 }
 
 int Server::getPortFromFile(string fileName) {
@@ -199,7 +211,7 @@ bool Server::shouldThreadDie(string command) {
     string explicitCommand = command.substr(0, firstSpaceOccurrence);
     string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
 
-    if (strcmp(explicitCommand.c_str(), "start") == 0) {
+    if (strcmp(explicitCommand.c_str(), "start") == 0 || strcmp(explicitCommand.c_str(), "list_games") == 0) {
         pthread_mutex_lock(&mutex_lock);
         for (int i = 0; i < rooms.size(); ++i) {
             Room currentRoom = *rooms.at(i); // assign the current room
@@ -284,11 +296,13 @@ const vector<pthread_t *> &Server::getVectorThreads() const {
     return vectorThreads;
 }
 
-void Server::closeAllUnActive() {
-    for(vector<struct Room*>::iterator it = rooms.begin(); it != rooms.end(); ++it) {
-        if (!(*it)->isRunning) {
-            close((*it)->socket1);
-            rooms.erase(it);
-        }
+void Server::closeAllRooms() {
+    for (int i = 0; i < rooms.size(); ++i) {
+        Room *room = rooms.at(i);
+        close(room->socket1);
+        if (room->isRunning)
+            close(room->socket2);
+        delete(room);
     }
+    rooms.clear();
 }

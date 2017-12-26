@@ -167,3 +167,7 @@ void ConsolePrinter::printWaitingForOtherPlayer(owner currentOwner) {
         cout << "waiting for player #1 move" << endl << endl;
     }
 }
+
+void ConsolePrinter::printMessage(string s) {
+    cout << s << endl;
+}

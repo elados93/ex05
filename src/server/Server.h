@@ -96,7 +96,7 @@ private:
     vector <pthread_t *> vectorThreads;
     vector <struct Room*>rooms;
 
-    void closeAllUnActive();
+    void closeAllRooms();
 };
 
 #endif //EX04_SERVER_H

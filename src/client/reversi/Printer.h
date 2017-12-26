@@ -24,6 +24,8 @@ public:
     virtual void printInformingGameStarted(owner currentOwner) = 0;
     virtual void printWaitingForOtherPlayer(owner currentOwner) = 0;
 
+    virtual void printMessage(string s) = 0;
+
 };
 
 

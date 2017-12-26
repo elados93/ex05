@@ -27,11 +27,6 @@ public:
      */
     void run();
 
-    /**
- * get the port of the connection with the server from the file.
- * @return the port.
- *//*
-    static Client *getClientFromFile(string fileName);*/
 
 private:
     /**
@@ -42,6 +37,7 @@ private:
     Client clientDetails;
 
     int verifyPoint();
+    bool isServerStopped;
 };
 
 

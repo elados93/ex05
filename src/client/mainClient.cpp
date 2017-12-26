@@ -12,7 +12,10 @@
 #include "reversi/RemoteGameManager.h"
 #include <iostream>
 
-
+/**
+* get the port of the connection with the server from the file.
+* @return the port.
+*/
 Client * getClientFromFile(string fileName);
 
 using namespace std;
@@ -31,8 +34,8 @@ int main() {
     menuConsole->printMenu(); // Print the 3 options to the client.
     delete (menuConsole);
 
-    int inputAIGameOrNot;
-    //cin >> inputAIGameOrNot;
+    int inputTypeGame;
+    //cin >> inputTypeGame;
 
     switch (3) { // ##%%366363CHANGE BACK!!#!@$!%^*%(%*%&#%!~
         case 1: {
@@ -50,21 +53,20 @@ int main() {
         }
         case 3: {
             Client *client = getClientFromFile("../settingsClient.txt");
-            try {
-                client->connectToServer();
-            } catch (const char *msg) {
-                cout << "Failed to connect to server. Reason: " << msg << endl;
-                return 0;
-            }
+
             ConsolePrinter printer3(*board, p1, p3);
             client->handleBeforeGame();
 
             int priorityClient = client->getPriority();
+            if (priorityClient == -1)
+                break; // couldn't get a valid priority
+            
             printer3.printInformingGameStarted(client->priority == 1 ? PLAYER_1 : PLAYER_2);
             RemoteGameManager game3(gameState1, p1, p3, printer3, *gameRules, *client);
             game3.setCurrentPlayer(priorityClient);
 
             game3.run();
+
             break;
         }
 

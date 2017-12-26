@@ -33,6 +33,7 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
     unsigned long stringLength;
     int n;
     n = (int) read(clientSocketSrc, &stringLength, sizeof(stringLength));
+
     if (n == -1)
         throw "Error reading string length!";
     char *moveFromSrc = new char[stringLength];

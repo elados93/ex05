@@ -55,6 +55,8 @@ public:
 
     void printWaitingForOtherPlayer(owner currentOwner);
 
+    void printMessage(string s);
+
 private:
     Board &board;
     Player &player1; // A reference to player 1 from GameManager.

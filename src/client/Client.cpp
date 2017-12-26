@@ -12,6 +12,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <csignal>
 
 using namespace std;
 
@@ -50,7 +51,6 @@ void Client::connectToServer() {
     *) &serverAddress, sizeof(serverAddress)) == -1) {
         throw "Error connecting to server";
     }
-    cout << "Connected to server" << endl;
 }
 
 void Client::sendPoint(int x, int y) {
@@ -69,6 +69,7 @@ void Client::sendPoint(int x, int y) {
 
     unsigned long xLen = playCommand.length();
     int n1;
+
     n1 = (int) write(clientSocket, &xLen, sizeof(xLen));
     if (n1 == -1)
         throw "Error sending string length";
@@ -85,6 +86,9 @@ int Client::getPriority() {
     if (n == -1)
         throw "Error reading priority from server";
 
+    if (result != 1 && result != 2)
+        return -1; // return -1 as a failure to reach server
+
     priority = result;
     return priority;
 }
@@ -100,6 +104,13 @@ void Client::handleBeforeGame() {
         // getline(cin, request); // gets dummy before input
         getline(cin, request); // get the request from client
 
+        try {
+            connectToServer();
+        } catch (const char *msg) {
+            cout << "Failed to connect to server. Reason: " << msg << endl;
+            return;
+        }
+        
         if(!checkCommandValidation(request)){
             cout << "This is not a valid request!" << endl;
             continue;
@@ -142,8 +153,11 @@ string Client::readFromServer() {
     unsigned long stringLength;
     int n;
     n = (int) read(clientSocket, &stringLength, sizeof(stringLength));
+    if (n == 0)
+        return "Server disconnected";
     if (n == -1)
         throw "Error reading string length!";
+
     char *command = new char[stringLength];
     for (int i = 0; i < stringLength; i++) {
         n = (int) read(clientSocket, &command[i], sizeof(char));
@@ -162,6 +176,8 @@ Point *Client::translatePointFromServer() {
     // Read new move arguments from server.
     int n;
     n = (int) read(clientSocket, &xValue, sizeof(xValue));
+    if (n == 0) // if server disconnected send the point -2 -2
+        return new Point(-2, -2);
     if (n == -1)
         throw "Error reading x value from Src client";
 

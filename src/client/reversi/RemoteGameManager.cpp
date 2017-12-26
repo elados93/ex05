@@ -13,46 +13,49 @@
 RemoteGameManager::RemoteGameManager(GameState &gameState, Player &player1, Player &player2, Printer &printer,
                                      GameRules &gameRules, Client &client1) :
         GameManager(gameState, player1, player2,
-                    printer, gameRules, false), clientDetails(client1) {}
+                    printer, gameRules, false), clientDetails(client1), isServerStopped(false) {}
 
 void RemoteGameManager::run() {
     status currentStatus = checkStatus();
 
-    while (currentStatus == RUNNING) {
+    while (currentStatus == RUNNING && !isServerStopped) {
         playOneTurn();
         currentStatus = checkStatus();
     }
 
-    printer.printBoard();
-    printer.printLastMove(*currentPlayer, lastMove);
+    if (currentStatus != RUNNING) {
 
-    owner winner = getWinner();
-    owner currentOwner = currentPlayer == &player1 ? PLAYER_1 : PLAYER_2;
-    if (checkStatus() == WIN) {
-        if (winner == PLAYER_1)
-            printer.printEndOfGame(player1, currentStatus);
-        if (winner == PLAYER_2)
-            printer.printEndOfGame(player2, currentStatus);
-    }
+        printer.printBoard();
+        printer.printLastMove(*currentPlayer, lastMove);
 
-    if (currentStatus == DRAW)
-        printer.printEndOfGame(player1, DRAW);
+        owner winner = getWinner();
+        owner currentOwner = currentPlayer == &player1 ? PLAYER_1 : PLAYER_2;
+        if (checkStatus() == WIN) {
+            if (winner == PLAYER_1)
+                printer.printEndOfGame(player1, currentStatus);
+            if (winner == PLAYER_2)
+                printer.printEndOfGame(player2, currentStatus);
+        }
 
-    // Get any key to terminate the game
-    string dummy;
-    getline(cin, dummy);
+        if (currentStatus == DRAW)
+            printer.printEndOfGame(player1, DRAW);
 
-    // if there was a draw, only one player will send the close command
-    if (currentStatus == DRAW && currentOwner == PLAYER_1) {
-        string closeCommand = "close ";
-        clientDetails.writeToServer(closeCommand);
-    }
+        // Get any key to terminate the game
+        string dummy;
+        getline(cin, dummy);
+
+        // if there was a draw, only one player will send the close command
+        if (currentStatus == DRAW && currentOwner == PLAYER_1) {
+            string closeCommand = "close ";
+            clientDetails.writeToServer(closeCommand);
+        }
 
 
-    // The looser needs to send the close message, the winner already knows he won
-    if (currentStatus == WIN && currentOwner != winner) {
-        string closeCommand = "close ";
-        clientDetails.writeToServer(closeCommand);
+        // The looser needs to send the close message, the winner already knows he won
+        if (currentStatus == WIN && currentOwner != winner) {
+            string closeCommand = "close ";
+            clientDetails.writeToServer(closeCommand);
+        }
     }
 
     if (lastMove != NULL)
@@ -80,9 +83,9 @@ void RemoteGameManager::playOneTurn() {
 
     //first run ever in the two clients game
     if (firstRun) {
-        
+
         printer.printBoard();
-        
+
         if (currentOwner == PLAYER_1) {
 
             // The first turn in the game player1 play.
@@ -99,12 +102,18 @@ void RemoteGameManager::playOneTurn() {
         if (currentOwner == PLAYER_2) {
             printer.printWaitingForOtherPlayer(currentOwner);
             // updating the board according the other players move
-            if (verifyPoint() == 1) {
+            int verifyPointResult = verifyPoint();
+            if (verifyPointResult == -2) { // signify that server disconnected
+                isServerStopped = true;
+                return;
+            }
+            if (verifyPointResult == 1) {
                 gameRules.makeMove(gameState, *lastMove, otherOwner);
                 gameRules.makePossibleMoves(gameState, currentOwner);
                 printer.printBoard(); // print the board after the changes of player1
             }
-            
+
+
             printer.printLastMove(*otherPlayer, lastMove); //prints other player last move
             printer.printNextPlayerMove(*currentPlayer, *playerPossibleMoves);
             if (lastMove != NULL)
@@ -119,24 +128,31 @@ void RemoteGameManager::playOneTurn() {
     else {
         // a regular move in which we update the board first and than play by the current player.
         printer.printWaitingForOtherPlayer(currentOwner);
-        if (verifyPoint() == -1) {
+        int verifyPointResult = verifyPoint();
+        if (verifyPointResult == -1) {
             // In case the game end after the opponent move.
             if (checkStatus() != RUNNING)
                 return;
-        } else  {
-            gameRules.makeMove(gameState, *lastMove, otherOwner);
-            // In case the game end after the opponent move.
-            if (checkStatus() != RUNNING)
+        } else {
+            if (verifyPointResult == -2) {
+                isServerStopped = true;
                 return;
+            } else {
+                gameRules.makeMove(gameState, *lastMove, otherOwner);
+                // In case the game end after the opponent move.
+                if (checkStatus() != RUNNING)
+                    return;
+            }
         } // The other player played something
-        
+
         printer.printBoard(); // print the board after the changes of player1
 
         printer.printLastMove(*otherPlayer, lastMove);
 
         // If the possible moves vector is empty send -1 to the server.
         if (playerPossibleMoves->empty()) {
-            printer.printNextPlayerMove(*currentPlayer, *playerPossibleMoves); // sending empty vector and print "NO MOVE"
+            printer.printNextPlayerMove(*currentPlayer,
+                                        *playerPossibleMoves); // sending empty vector and print "NO MOVE"
             string dummy; // Input any key from the user
             getline(cin, dummy);
 
@@ -171,9 +187,14 @@ void RemoteGameManager::setCurrentPlayer(int playerNumber) {
 
 int RemoteGameManager::verifyPoint() {
     Point *p = clientDetails.translatePointFromServer();
+    if (p->getX() == -2 && p->getY() == -2) {
+        printer.printMessage("Server disconnected!");
+        return -2;
+
+    }
     int x = p->getX();
     int y = p->getY();
-    delete(p);
+    delete (p);
     // -1 meaning the player has no moves.
     if (x == -1 && y == -1) {
         if (lastMove != NULL)
@@ -190,7 +211,7 @@ int RemoteGameManager::verifyPoint() {
     return 1;
 }
 
-Client * getClientFromFile(string fileName) {
+Client *getClientFromFile(string fileName) {
     try {
         const char *clientSettingsFileName = fileName.c_str();
         ifstream fileInput(clientSettingsFileName);
@@ -211,7 +232,7 @@ Client * getClientFromFile(string fileName) {
         std::copy(IPString.begin(), IPString.end(), serverIP);
         serverIP[IPString.size()] = '\0';
         return new Client(serverIP, port);
-    } catch (char* ex) {
+    } catch (char *ex) {
         cout << "error while reading settings file";
         exit(-1);
     }
