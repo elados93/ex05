@@ -4,6 +4,7 @@
 //
 
 #include "Client.h"
+#include "../server/StringHandler.h"
 #include <stdio.h>
 #include <sstream>
 #include <sys/socket.h>
@@ -12,7 +13,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
-#include <csignal>
 
 using namespace std;
 
@@ -110,7 +110,7 @@ void Client::handleBeforeGame() {
             cout << "Failed to connect to server. Reason: " << msg << endl;
             return;
         }
-        
+
         if(!checkCommandValidation(request)){
             cout << "This is not a valid request!" << endl;
             continue;
@@ -121,13 +121,13 @@ void Client::handleBeforeGame() {
         string serverFeedback = readFromServer();
 
         if (strcmp(serverFeedback.c_str(), "Joined") == 0) {
-            string roomToJoin = translateDetails(request);
+            string roomToJoin = StringHandler::getSubStringAfterSpace(request);
             cout << "Joined: " << roomToJoin << endl;
             break;
         }
         
         if (strcmp(serverFeedback.c_str(), "Started") == 0) {
-            string roomName = translateDetails(request);
+            string roomName = StringHandler::getSubStringAfterSpace(request);
             cout << "The room: " << roomName << " was created!" << endl;
             break;
         }
@@ -189,22 +189,10 @@ Point *Client::translatePointFromServer() {
     return new Point(xValue, yValue);
 }
 
-string Client::translateDetails(string s) {
-    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
-    return s.substr(firstSpaceOccurrence + 1, s.length());
-}
-
-string Client::translateCommand(string s) {
-    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
-    return s.substr(0, firstSpaceOccurrence);
-}
-
 bool Client::checkCommandValidation(string s) {
-    string command = translateCommand(s);
-    if(strcmp(command.c_str(), "start") == 0 || strcmp(command.c_str(), "list_games") == 0
-            || strcmp(command.c_str(), "join") == 0)
-        return true;
-    return false;
+    string command = StringHandler::extractCommand(s);
+    return strcmp(command.c_str(), "start") == 0 || strcmp(command.c_str(), "list_games") == 0
+           || strcmp(command.c_str(), "join") == 0;
 }
 
 

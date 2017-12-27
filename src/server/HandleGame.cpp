@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include "HandleGame.h"
+#include "StringHandler.h"
 
 HandleGame::HandleGame(Room &room, CommandManager &commandManager, pthread_mutex_t &mutex_lock) : room(room),
                                                                                                   commandManager(
@@ -47,10 +48,9 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
     string strCommand(moveFromSrc);
     delete (moveFromSrc);
 
-    string explicitCommand = extractCommand(strCommand);
-    if(!checkValidCommand(explicitCommand)){
+    string explicitCommand = StringHandler::extractCommand(strCommand);
+    if(!checkValidCommand(explicitCommand))
         cout << "This is not a valid move!" << endl;
-    }
 
     if (strcmp(explicitCommand.c_str(), "close") == 0) {
         strCommand.append(room.roomName);
@@ -70,11 +70,7 @@ int HandleGame::handleClient(int clientSocketSrc, int clientSocketDst) {
 }
 
 bool HandleGame::checkValidCommand(string s) {
-    string command = extractCommand(s);
+    string command = StringHandler::extractCommand(s);
     return strcmp(command.c_str(), "play") == 0 || strcmp(command.c_str(), "close") == 0;
 }
 
-string HandleGame::extractCommand(string s) {
-    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
-    return s.substr(0, firstSpaceOccurrence); // extract
-}

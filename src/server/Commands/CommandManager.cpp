@@ -9,8 +9,9 @@
 #include "PlayCommand.h"
 #include "JoinCommand.h"
 #include "ListCommand.h"
+#include "../StringHandler.h"
 
-CommandManager::CommandManager(vector <Room*> &room) : games(room) {
+CommandManager::CommandManager(vector <struct Room*> &room) : games(room) {
     mapCommands["start"] = new StartCommand();
     mapCommands["list_games"] = new ListCommand();
     mapCommands["join"] = new JoinCommand();
@@ -25,12 +26,8 @@ CommandManager::~CommandManager() {
 }
 
 void CommandManager::executeCommand(string command, int socketSrc, int socketDst, Room* roomToDelete) {
-    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
-    string explicitCommand = command.substr(0,firstSpaceOccurrence);
-
-    string information;
-    if (firstSpaceOccurrence < command.length())
-        information = command.substr(firstSpaceOccurrence + 1, command.length()).c_str();
+    string explicitCommand = StringHandler::extractCommand(command);
+    string information = StringHandler::getSubStringAfterSpace(command);
 
     SocketAndInformation *commandDetails = new SocketAndInformation();
     commandDetails->socketSrc = socketSrc;

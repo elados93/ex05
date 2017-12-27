@@ -5,6 +5,18 @@
 
 #include "StringHandler.h"
 
-string StringHandler::getSubStringAfterSpace(string s, int place) {
-    return std::__cxx11::string();
+string StringHandler::getSubStringAfterSpace(string s) {
+    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
+    string information;
+    if (firstSpaceOccurrence < s.length())
+        information = s.substr(firstSpaceOccurrence + 1, s.length()).c_str();
+    return information;
 }
+
+string StringHandler::extractCommand(string s) {
+    unsigned long firstSpaceOccurrence = s.find_first_of(' ');
+    return s.substr(0, firstSpaceOccurrence); // extract
+}
+
+
+

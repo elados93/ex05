@@ -7,7 +7,7 @@
 #define EX04_CLIENT_H
 
 #include <iostream>
-#include <Point.h>
+#include "reversi/Point.h"
 
 using namespace std;
 
@@ -51,8 +51,6 @@ private:
 
     bool checkCommandValidation(string s);
     string readFromServer();
-    string translateCommand(string s); // trim the command
-    string translateDetails(string s); // trim the first word from th string s
 };
 
 

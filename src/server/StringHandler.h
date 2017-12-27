@@ -12,7 +12,8 @@ using namespace std;
 
 class StringHandler {
 public:
-    static string getSubStringAfterSpace(string s, int place);
+    static string getSubStringAfterSpace(string s);
+    static string extractCommand(string s);
 };
 
 

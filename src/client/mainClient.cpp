@@ -10,7 +10,6 @@
 #include "reversi/ConsolePrinter.h"
 #include "reversi/GameManager.h"
 #include "reversi/RemoteGameManager.h"
-#include <iostream>
 
 /**
 * get the port of the connection with the server from the file.

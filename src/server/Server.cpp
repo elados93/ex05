@@ -4,6 +4,7 @@
 
 #include "Server.h"
 #include "HandleGame.h"
+#include "StringHandler.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -104,7 +105,7 @@ void *communicateWithClient(void *args) {
         pthread_mutex_unlock(&mutex_lock);
 
         if (server->shouldThreadDie(strCommand)) { // if the command was start or list_games, stop the loop and delete the thread
-            if (strcmp(strCommand.c_str(), "list_games") == 0) { // for list_games command close the socket 
+            if (strcmp(strCommand.c_str(), "list_games") == 0) { // for list_games command close the socket
                 close(currentClientSocket);
                 pthread_mutex_lock(&mutex_lock);
                 server->numberOfConnectedClients --;
@@ -207,9 +208,8 @@ int Server::getPortFromFile(string fileName) {
 }
 
 bool Server::shouldThreadDie(string command) {
-    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
-    string explicitCommand = command.substr(0, firstSpaceOccurrence);
-    string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
+    string explicitCommand = StringHandler::extractCommand(command);
+    string roomName = StringHandler::getSubStringAfterSpace(command);
 
     if (strcmp(explicitCommand.c_str(), "start") == 0 || strcmp(explicitCommand.c_str(), "list_games") == 0) {
         pthread_mutex_lock(&mutex_lock);
@@ -235,9 +235,8 @@ CommandManager *Server::getCommandManager() const {
 }
 
 bool Server::shouldThreadRunGame(string command, int mySocket) {
-    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
-    string explicitCommand = command.substr(0, firstSpaceOccurrence);
-    string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
+    string explicitCommand = StringHandler::extractCommand(command);
+    string roomName = StringHandler::getSubStringAfterSpace(command);
 
     if (strcmp(explicitCommand.c_str(), "join") == 0) {
         pthread_mutex_lock(&mutex_lock);
@@ -256,8 +255,7 @@ bool Server::shouldThreadRunGame(string command, int mySocket) {
 }
 
 Room *Server::getRoomFromCommand(string command) {
-    unsigned long firstSpaceOccurrence = command.find_first_of(' ');
-    string roomName = command.substr(firstSpaceOccurrence + 1, command.length());
+    string roomName = StringHandler::getSubStringAfterSpace(command);
 
     pthread_mutex_lock(&mutex_lock);
     for (int i = 0; i < rooms.size(); ++i) {
