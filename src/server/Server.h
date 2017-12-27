@@ -17,6 +17,9 @@
 
 using namespace std;
 
+/**
+ *  struct for each room that has been created.
+ */
 struct Room {
     string roomName;
     int socket1;
@@ -82,8 +85,16 @@ public:
      */
     void deleteThread(pthread_t *threadToDelete);
 
+    /**
+     * get the number of connected clients.
+     * @return the amount.
+     */
     int getNumberOfConnectedClients() const;
 
+    /**
+     * get the server socket.
+     * @return
+     */
     int getServerSocket() const;
 
     const vector<pthread_t *> &getVectorThreads() const;
@@ -96,6 +107,9 @@ private:
     vector <pthread_t *> vectorThreads;
     vector <struct Room*>rooms;
 
+    /**
+     * loop throught all the rooms and close each socket.
+     */
     void closeAllRooms();
 };
 

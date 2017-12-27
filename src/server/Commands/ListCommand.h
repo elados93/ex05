@@ -22,6 +22,11 @@ public:
     virtual void execute(SocketAndInformation *args);
 
 private:
+    /**
+     * loop throght the list of rooms and increment the counter for each room containing only one valid socket and the isRunning is false.
+     * @param rooms is the vector of rooms
+     * @return the amount of un active rooms.
+     */
     int countUnActiveRooms(vector <Room*> &rooms);
 };
 

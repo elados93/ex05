@@ -21,6 +21,13 @@ public:
     virtual void execute(SocketAndInformation *args);
 
 private:
+    /**
+     * this functions loop throught the rooms vector and checks if the name of the optional room allready
+     * exists.
+     * @param rooms is the rooms vector
+     * @param name is the new optional room
+     * @return true or false
+     */
     bool checkIfRoomAlreadyExists(vector<Room*> &rooms, string name);
 };
 

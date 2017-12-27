@@ -15,7 +15,18 @@ pthread_mutex_t mutex_lock;
 
 using namespace std;
 
+/**
+ * this is the threadic function that deals with each connected client.
+ * @param args is all the information needed to the clients connection.
+ * @return
+ */
 void *communicateWithClient(void *args);
+
+/**
+ * this is the threadic function of the server
+ * @param args is all the information needed to the servers connection.
+ * @return
+ */
 void *acceptClients(void *args);
 
 
