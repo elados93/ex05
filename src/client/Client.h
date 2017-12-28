@@ -23,8 +23,9 @@ public:
      * getting x&y legal values and sending them to the sever..
      * @param x Point value.
      * @param y Point value.
+     * @return true or false if succed.
      */
-    void sendPoint(int x, int y);
+    bool sendPoint(int x, int y);
 
     /**
      * get priority according to the client socket.
@@ -51,6 +52,10 @@ private:
 
     bool checkCommandValidation(string s);
     string readFromServer();
+    
+    bool foo() {
+        return false;
+    }
 };
 
 

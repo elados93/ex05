@@ -9,17 +9,9 @@
 JoinCommand::JoinCommand() {}
 
 void JoinCommand::execute(SocketAndInformation *args) {
-    int roomIndex = -1;
-    for (int i = 0; i < args->rooms->size(); ++i) {
-        Room *currentRoom = args->rooms->at(i);
-        if (strcmp(currentRoom->roomName.c_str(), args->information.c_str()) == 0 && !currentRoom->isRunning) {
-            roomIndex = i;
-            break;
-        }
-    }
+    Room* wantedRoom = args->roomsHandler->getUnActiveRoom(args->information);
     
-    if (roomIndex != -1) {
-        Room *wantedRoom = args->rooms->at(roomIndex);
+    if (wantedRoom != NULL) {
         wantedRoom->isRunning = true; // activating the room
         wantedRoom->socket2 = args->socketSrc; // assign the second player socket
         // sending priorities to players

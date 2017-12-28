@@ -13,6 +13,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -25,9 +26,9 @@ Client::Client(const char *serverIP, int serverPort) :
 void Client::connectToServer() {
     // Create a socket point
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (clientSocket == -1) 
+    if (clientSocket == -1)
         throw "Error opening socket";
-    
+
     // Get a hostent structure for the given host address
     struct hostent *server;
 
@@ -53,7 +54,7 @@ void Client::connectToServer() {
     }
 }
 
-void Client::sendPoint(int x, int y) {
+bool Client::sendPoint(int x, int y) {
     stringstream streamX;
     streamX << x;
     string strX = streamX.str();
@@ -75,9 +76,14 @@ void Client::sendPoint(int x, int y) {
         throw "Error sending string length";
     for (unsigned long i = 0; i < xLen; ++i) {
         n1 = (int) write(clientSocket, &playCommand[i], sizeof(char));
-        if (n1 == -1)
-            throw "Error writing x value to socket";
+        if (n1 == -1) {
+            return false;
+        }
+
     }
+
+    return true;
+
 }
 
 int Client::getPriority() {
@@ -94,11 +100,11 @@ int Client::getPriority() {
 }
 
 Client::~Client() {
-    delete(serverIP);
+    delete (serverIP);
 }
 
 void Client::handleBeforeGame() {
-    while(true) {
+    while (true) {
         string request;
 
         // getline(cin, request); // gets dummy before input
@@ -111,7 +117,7 @@ void Client::handleBeforeGame() {
             return;
         }
 
-        if(!checkCommandValidation(request)){
+        if (!checkCommandValidation(request)) {
             cout << "This is not a valid request!" << endl;
             continue;
         }
@@ -120,15 +126,15 @@ void Client::handleBeforeGame() {
 
         string serverFeedback = readFromServer();
 
-        if (strcmp(serverFeedback.c_str(), "Joined") == 0) {
-            string roomToJoin = StringHandler::getSubStringAfterSpace(request);
-            cout << "Joined: " << roomToJoin << endl;
-            break;
-        }
-        
         if (strcmp(serverFeedback.c_str(), "Started") == 0) {
             string roomName = StringHandler::getSubStringAfterSpace(request);
             cout << "The room: " << roomName << " was created!" << endl;
+            break;
+        }
+        
+        if (strcmp(serverFeedback.c_str(), "Joined") == 0) {
+            string roomToJoin = StringHandler::getSubStringAfterSpace(request);
+            cout << "Joined: " << roomToJoin << endl;
             break;
         }
 
@@ -139,6 +145,7 @@ void Client::handleBeforeGame() {
 void Client::writeToServer(string request) {
     unsigned long sLen = request.length();
     int n;
+
     n = (int) write(clientSocket, &sLen, sizeof(sLen));
     if (n == -1)
         throw "Error writing string length!";
@@ -166,7 +173,7 @@ string Client::readFromServer() {
     }
     command[stringLength] = '\0';
     string strCommand(command);
-    delete(command);
+    delete (command);
     return strCommand;
 }
 

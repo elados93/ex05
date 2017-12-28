@@ -95,7 +95,10 @@ void RemoteGameManager::playOneTurn() {
             gameRules.makeMove(gameState, *lastMove, currentOwner);
             printer.printBoard();
             // sending the move to the server
-            clientDetails.sendPoint(lastMove->getX(), lastMove->getY());
+            if (!clientDetails.sendPoint(lastMove->getX(), lastMove->getY())) {
+                isServerStopped = true;
+                return;
+            }
         }
         // First run for second player
         if (currentOwner == PLAYER_2) {
@@ -121,7 +124,10 @@ void RemoteGameManager::playOneTurn() {
             lastMove = new Point(player1.getMove(gameState));
             gameRules.makeMove(gameState, *lastMove, currentOwner);
             printer.printBoard();
-            clientDetails.sendPoint(lastMove->getX(), lastMove->getY());
+            if (!clientDetails.sendPoint(lastMove->getX(), lastMove->getY())) {
+                isServerStopped = true;
+                return;
+            }
         }
     } // end of first run
     else {
@@ -159,7 +165,10 @@ void RemoteGameManager::playOneTurn() {
                 delete (lastMove);
 
             lastMove = NULL;
-            clientDetails.sendPoint(-1, -1);
+            if (!clientDetails.sendPoint(-1, -1)) {
+                isServerStopped = true;
+                return;
+            }
         } else { // The player has at least one move.
             gameRules.makePossibleMoves(gameState, currentOwner);
             printer.printNextPlayerMove(*currentPlayer, *playerPossibleMoves);
@@ -170,7 +179,10 @@ void RemoteGameManager::playOneTurn() {
             lastMove = new Point(currentPlayer->getMove(gameState));
             gameRules.makeMove(gameState, *lastMove, currentOwner);
             printer.printBoard();
-            clientDetails.sendPoint(lastMove->getX(), lastMove->getY());
+            if (!clientDetails.sendPoint(lastMove->getX(), lastMove->getY())) {
+                isServerStopped = true;
+                return;
+            }
         }
     }
     // making sure the o player will not have a first run

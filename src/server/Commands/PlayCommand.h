@@ -17,9 +17,6 @@ public:
      * @param args is the info of the x &y values.
      */
     virtual void execute(SocketAndInformation *args);
-
-private:
-    //int getTheOtherSocket(vector<struct Room*> &rooms, int socket);
 };
 
 

@@ -26,7 +26,8 @@ struct ClientSocketAndServer {
 };
 
 Server::Server(int port) : port(port), serverSocket(0), numberOfConnectedClients(0) {
-    commandManager = new CommandManager(rooms);
+    roomsHandler = new RoomsHandler();
+    commandManager = new CommandManager(*roomsHandler);
     cout << "Server was created" << endl;
 }
 
@@ -49,6 +50,7 @@ void Server::start() {
     // create a thread that will accept clients
     Server *pointerToServer = this;
     pthread_t *acceptClientsThread = new pthread_t();
+
     int rc1 = pthread_create(acceptClientsThread, NULL, acceptClients,
                             (void *) pointerToServer);
     // check if the thread is valid
@@ -135,7 +137,7 @@ void *acceptClients(void *args) {
     Server *server = (Server *)args;
     int serverSocket = server->getServerSocket();
     int numberOfConnectedClients = server->getNumberOfConnectedClients();
-    vector <pthread_t *> vectorThreads = server->getVectorThreads();
+    vector <pthread_t *> &vectorThreads = server->getVectorThreads();
 
     // Start listening to incoming connections
     listen(serverSocket, MAX_CONNECTED_CLIENTS);
@@ -156,7 +158,9 @@ void *acceptClients(void *args) {
         if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
 
             pthread_t *currentThread = new pthread_t();
+            pthread_mutex_lock(&mutex_lock);
             vectorThreads.push_back(currentThread);
+            pthread_mutex_unlock(&mutex_lock);
 
             struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
             clientSocketAndServer->server = (Server *)args;
@@ -178,9 +182,10 @@ void *acceptClients(void *args) {
 
 
 void Server::stop() {
-    closeAllRooms();
+
+    roomsHandler->closeAllRooms();
     while (true) {
-        if (rooms.empty()) {
+        if (roomsHandler->areRoomsEmpty()) {
             break;
         }
     }
@@ -210,20 +215,18 @@ int Server::getPortFromFile(string fileName) {
 bool Server::shouldThreadDie(string command) {
     string explicitCommand = StringHandler::extractCommand(command);
     string roomName = StringHandler::getSubStringAfterSpace(command);
+    
+    if (strcmp(explicitCommand.c_str(), "list_games") == 0)
+        return true;
 
-    if (strcmp(explicitCommand.c_str(), "start") == 0 || strcmp(explicitCommand.c_str(), "list_games") == 0) {
+    bool result = false;
+
+    if (strcmp(explicitCommand.c_str(), "start") == 0) {
         pthread_mutex_lock(&mutex_lock);
-        for (int i = 0; i < rooms.size(); ++i) {
-            Room currentRoom = *rooms.at(i); // assign the current room
-            // check if there is room with that name
-            if (strcmp(currentRoom.roomName.c_str(), roomName.c_str()) == 0) {
-                pthread_mutex_unlock(&mutex_lock);
-                return true;
-            }
-        }
+        result = roomsHandler->isRoomExists(roomName);
         pthread_mutex_unlock(&mutex_lock);
     }
-    return false;
+    return result;
 }
 
 Server::~Server() {
@@ -237,42 +240,29 @@ CommandManager *Server::getCommandManager() const {
 bool Server::shouldThreadRunGame(string command, int mySocket) {
     string explicitCommand = StringHandler::extractCommand(command);
     string roomName = StringHandler::getSubStringAfterSpace(command);
-
+    
+    bool result = false;
     if (strcmp(explicitCommand.c_str(), "join") == 0) {
         pthread_mutex_lock(&mutex_lock);
-        for (int i = 0; i < rooms.size(); ++i) {
-            Room currentRoom = *rooms.at(i); // assign the current room
-            // check if there is room with that name and if that room is occupied with 2 players
-            if (strcmp(currentRoom.roomName.c_str(), roomName.c_str()) == 0 && currentRoom.isRunning
-                && currentRoom.socket2 == mySocket) {
-                pthread_mutex_unlock(&mutex_lock);
-                return true;
-            }
-        }
+        result = roomsHandler->isRoomExistsAndRunningWithSocket(roomName, mySocket);
         pthread_mutex_unlock(&mutex_lock);
     }
-    return false;
+    return result;
 }
 
 Room *Server::getRoomFromCommand(string command) {
     string roomName = StringHandler::getSubStringAfterSpace(command);
 
     pthread_mutex_lock(&mutex_lock);
-    for (int i = 0; i < rooms.size(); ++i) {
-        Room *currentRoom = rooms.at(i); // assign the current room
-        if (strcmp(currentRoom->roomName.c_str(), roomName.c_str()) == 0 && currentRoom->isRunning) {
-            pthread_mutex_unlock(&mutex_lock);
-            return currentRoom;
-        }
-    }
+    Room *room = roomsHandler->getRunningRoom(roomName);
     pthread_mutex_unlock(&mutex_lock);
-    return NULL;
+    return room;
 }
 
 void Server::deleteThread(pthread_t *threadToDelete) {
     pthread_mutex_lock(&mutex_lock);
     for (vector<pthread_t *>::iterator it = vectorThreads.begin(); it != vectorThreads.end(); ++it) {
-        if ((*it) == threadToDelete) {
+        if (*it == threadToDelete) {
             vectorThreads.erase(it);
             delete (threadToDelete);
             pthread_mutex_unlock(&mutex_lock);
@@ -290,17 +280,6 @@ int Server::getServerSocket() const {
     return serverSocket;
 }
 
-const vector<pthread_t *> &Server::getVectorThreads() const {
+vector<pthread_t *> &Server::getVectorThreads() {
     return vectorThreads;
-}
-
-void Server::closeAllRooms() {
-    for (int i = 0; i < rooms.size(); ++i) {
-        Room *room = rooms.at(i);
-        close(room->socket1);
-        if (room->isRunning)
-            close(room->socket2);
-        delete(room);
-    }
-    rooms.clear();
 }

@@ -3,7 +3,13 @@ project(ex04)
 
 set(CMAKE_CXX_STANDARD 98)
 
+add_subdirectory(src/gtest_src)
+
+include_directories(include src/gtest_src/googletest/include ${gtest_src}/include ${gtest_src})
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pthread")
+
+set(TEST_FILES src/test src/test/StringHandlerTest.cpp)
 
 set(REMOTE_FILES src/client/Client.cpp src/client/Client.h
         src/server/Server.cpp src/server/Server.h src/server/Commands/CommandManager.cpp
@@ -12,7 +18,7 @@ set(REMOTE_FILES src/client/Client.cpp src/client/Client.h
         src/server/Commands/ListCommand.h src/server/Commands/JoinCommand.cpp src/server/Commands/JoinCommand.h
         src/server/Commands/CloseCommand.cpp src/server/Commands/CloseCommand.h src/server/Commands/Command.cpp
         src/server/HandleGame.cpp src/server/HandleGame.h src/server/StringHandler.cpp src/server/StringHandler.h
-        src/server/Commands/Command.h)
+        src/server/Commands/Command.h src/server/RoomsHandler.cpp src/server/RoomsHandler.h)
 
 set(REVERSI_FILES src/client/reversi/AIPlayer.cpp src/client/reversi/AIPlayer.h
         src/client/reversi/Board.cpp src/client/reversi/Board.h
@@ -29,3 +35,7 @@ set(REVERSI_FILES src/client/reversi/AIPlayer.cpp src/client/reversi/AIPlayer.h
 add_executable(Client ${REMOTE_FILES} ${REVERSI_FILES} src/client/mainClient.cpp)
 
 add_executable(Server ${REMOTE_FILES} ${REVERSI_FILES} src/server/mainServer.cpp)
+
+add_executable(TestReversi ${REVERSI_FILES} ${REMOTE_FILES} ${TEST_FILES} src/test/gtest_main.cpp)
+
+target_link_libraries(TestReversi gtest gtest_main gmock)

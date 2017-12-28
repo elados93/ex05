@@ -11,7 +11,7 @@
 #include "ListCommand.h"
 #include "../StringHandler.h"
 
-CommandManager::CommandManager(vector <struct Room*> &room) : games(room) {
+CommandManager::CommandManager(RoomsHandler &room) : games(room) {
     mapCommands["start"] = new StartCommand();
     mapCommands["list_games"] = new ListCommand();
     mapCommands["join"] = new JoinCommand();
@@ -33,7 +33,7 @@ void CommandManager::executeCommand(string command, int socketSrc, int socketDst
     commandDetails->socketSrc = socketSrc;
     commandDetails->socketDst = socketDst; // only in play & close commands
     commandDetails->information = information;
-    commandDetails->rooms = &games;
+    commandDetails->roomsHandler = &games;
     commandDetails->roomToDelete = roomToDelete; // only in close command
 
     Command *commandObj = mapCommands[explicitCommand];

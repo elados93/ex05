@@ -10,7 +10,7 @@ StartCommand::StartCommand() {}
 
 void StartCommand::execute(SocketAndInformation *details) {
 
-    if (checkIfRoomAlreadyExists(*(details->rooms), details->information))
+    if (details->roomsHandler->isRoomExists(details->information))
         sendFeedbackToClient("There is already room with that name!", details->socketSrc);
     else {
         Room *room = new Room();
@@ -19,19 +19,10 @@ void StartCommand::execute(SocketAndInformation *details) {
         room->isRunning = false; // The game didn't start yet
         room->roomName = details->information; // Set the hakalmarim room
 
-        details->rooms->push_back(room);
+        details->roomsHandler->createRoom(room);
 
         // inform the client the room was created
         string feedBackToClient = "Started";
         sendFeedbackToClient(feedBackToClient, details->socketSrc);
     }
-}
-
-bool StartCommand::checkIfRoomAlreadyExists(vector<Room *> &rooms, string name) {
-    for (int i = 0; i < rooms.size(); ++i) {
-        Room *currentRoom = rooms.at(i);
-        if (strcmp(currentRoom->roomName.c_str(), name.c_str()) == 0)
-            return true;
-    }
-    return false;
 }

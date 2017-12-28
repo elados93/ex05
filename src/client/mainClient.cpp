@@ -52,7 +52,7 @@ int main() {
         }
         case 3: {
             Client *client = getClientFromFile("../settingsClient.txt");
-
+            
             ConsolePrinter printer3(*board, p1, p3);
             client->handleBeforeGame();
 

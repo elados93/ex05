@@ -6,11 +6,6 @@
 #include "CloseCommand.h"
 
 void CloseCommand::execute(SocketAndInformation *args) {
-    for(vector<struct Room*>::iterator it = args->rooms->begin(); it != args->rooms->end(); ++it) {
-        if ((*it) == args->roomToDelete) {
-            args->rooms->erase(it);
-            break;
-        }
-    }
+    args->roomsHandler->closeRoom(args->roomToDelete);
     delete(args->roomToDelete);
 }

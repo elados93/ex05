@@ -20,9 +20,6 @@ public:
      * @param args is information that is empty.
      */
     virtual void execute(SocketAndInformation *args);
-
-private:
-    int countUnActiveRooms(vector <Room*> &rooms);
 };
 
 

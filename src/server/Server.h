@@ -12,17 +12,11 @@
 #include <cstdlib>
 #include <vector>
 #include "Commands/CommandManager.h"
+#include "RoomsHandler.h"
 
 #define MAX_CONNECTED_CLIENTS 10
 
 using namespace std;
-
-struct Room {
-    string roomName;
-    int socket1;
-    int socket2;
-    bool isRunning;
-};
 
 class CommandManager;
 
@@ -86,7 +80,7 @@ public:
 
     int getServerSocket() const;
 
-    const vector<pthread_t *> &getVectorThreads() const;
+    vector<pthread_t *> &getVectorThreads();
 
 
 private:
@@ -94,9 +88,7 @@ private:
     int serverSocket; // the socket's file descriptor
     CommandManager *commandManager;
     vector <pthread_t *> vectorThreads;
-    vector <struct Room*>rooms;
-
-    void closeAllRooms();
+    RoomsHandler *roomsHandler;
 };
 
 #endif //EX04_SERVER_H

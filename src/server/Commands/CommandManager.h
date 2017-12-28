@@ -9,6 +9,7 @@
 
 #include <map>
 #include "Command.h"
+#include "../RoomsHandler.h"
 
 using namespace std;
 
@@ -18,20 +19,20 @@ struct SocketAndInformation {
     int socketSrc;
     int socketDst;
     string information;
-    vector <struct Room*>*rooms;
+    RoomsHandler *roomsHandler;
     Room* roomToDelete;
 };
 
 class CommandManager {
 public:
-    CommandManager(vector <struct Room*> &room);
+    CommandManager(RoomsHandler &room);
     ~CommandManager();
 
-    void executeCommand(string command, int socketSrc, int socketDst = 0, Room* roomToDelete = NULL);
+    void executeCommand(string command, int socketSrc, int socketDst = 0, struct Room* roomToDelete = NULL);
 
 private:
     map<string, Command *> mapCommands;
-    vector<Room*> &games;
+    RoomsHandler &games;
 };
 
 
