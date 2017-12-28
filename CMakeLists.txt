@@ -9,7 +9,7 @@ include_directories(include src/gtest_src/googletest/include ${gtest_src}/includ
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pthread")
 
-set(TEST_FILES src/test src/test/StringHandlerTest.cpp)
+set(TEST_FILES src/test src/test/StringHandlerTest.cpp src/test/roomsHandlerTest.cpp)
 
 set(REMOTE_FILES src/client/Client.cpp src/client/Client.h
         src/server/Server.cpp src/server/Server.h src/server/Commands/CommandManager.cpp
