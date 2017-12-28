@@ -27,5 +27,4 @@ TEST(roomsHandlerTest, checkRoom){
     roomsHandler.closeAllRooms();
     EXPECT_TRUE(roomsHandler.areRoomsEmpty());
     EXPECT_FALSE(roomsHandler.getRunningRoom("eled"));
-
 }
