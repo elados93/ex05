@@ -13,6 +13,9 @@ class HandleGame {
 public:
     HandleGame(Room &room, CommandManager &commandManager, pthread_mutex_t &mutex_lock);
 
+    /**
+     * this functions moves from one client request to the other until the game ends.
+     */
     void handle2ClientsGame();
 private:
     int socket1;
@@ -28,6 +31,13 @@ private:
      * @return 1 if the info was transfered correctly. 0 is the game is over.
      */
     int handleClient(int clientSocketSrc, int clientSocketDsc);
+
+    /**
+     * this class deals with a current room playing. meaning the only command the clients can write are moves or whether close, if the
+     * game has ended. this function checks the validation.
+     * @param s is the type of command.
+     * @return true or false.
+     */
     bool checkValidCommand(string s);
 
 };
