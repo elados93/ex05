@@ -54,14 +54,16 @@ int main() {
             Client *client = getClientFromFile("../settingsClient.txt");
             
             ConsolePrinter printer3(*board, p1, p3);
-            client->handleBeforeGame();
+            if(!client->handleBeforeGame()) {
+                printer3.printMessage("Server Disconnected!");
+                break;
+            }
 
             int priorityClient = client->getPriority();
             if (priorityClient == -1) {
                 printer3.printMessage("Server disconnected!");
                 break;
             }
-                
             
             printer3.printInformingGameStarted(client->priority == 1 ? PLAYER_1 : PLAYER_2);
             RemoteGameManager game3(gameState1, p1, p3, printer3, *gameRules, *client);

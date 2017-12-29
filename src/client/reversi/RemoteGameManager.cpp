@@ -56,6 +56,9 @@ void RemoteGameManager::run() {
             clientDetails.writeToServer(closeCommand);
         }
     }
+    if (isServerStopped) {
+        printer.printMessage("Server disconnected!");
+    }
 
     if (lastMove != NULL)
         delete (lastMove);
@@ -198,11 +201,9 @@ void RemoteGameManager::setCurrentPlayer(int playerNumber) {
 
 int RemoteGameManager::verifyPoint() {
     Point *p = clientDetails.translatePointFromServer();
-    if (p->getX() == -2 && p->getY() == -2) {
-        printer.printMessage("Server disconnected!");
+    if (p->getX() == -2 && p->getY() == -2)
         return -2;
 
-    }
     int x = p->getX();
     int y = p->getY();
     delete (p);
