@@ -1,6 +1,6 @@
 
 // Created by Elad Aharon and Shahar Palmor 16/12/17.
-// ID: 311200786
+// ID: 311200786 307929927
 //
 
 #ifndef EX04_CLOSECOMMAND_H
@@ -9,6 +9,7 @@
 #include "Command.h"
 class CloseCommand : public Command {
 public:
+    CloseCommand();
 
     /**
      * the execute command of the close loop thrught the list of rooms and delete the room.
