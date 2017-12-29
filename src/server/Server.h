@@ -14,7 +14,7 @@
 #include "Commands/CommandManager.h"
 #include "RoomsHandler.h"
 
-#define MAX_CONNECTED_CLIENTS 10
+#define MAX_CONNECTED_CLIENTS 30 // can be modified by the programmer
 
 using namespace std;
 
@@ -31,7 +31,7 @@ public:
     /**
      * this function get the information of the port.
      * @param fileName is the name of the file
-     * @return the port nunmber.
+     * @return the port number.
      */
     static int getPortFromFile(string fileName);
 

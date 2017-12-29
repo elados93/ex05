@@ -55,35 +55,35 @@ void Client::connectToServer() {
 }
 
 bool Client::sendPoint(int x, int y) {
-    stringstream streamX;
-    streamX << x;
-    string strX = streamX.str();
-    stringstream streamY;
-    streamY << y;
-    string strY = streamY.str();
+    try {
+        stringstream streamX;
+        streamX << x;
+        string strX = streamX.str();
+        stringstream streamY;
+        streamY << y;
+        string strY = streamY.str();
 
-    string playCommand;
-    playCommand.append("play ");
-    playCommand.append(strX);
-    playCommand.append(" ");
-    playCommand.append(strY);
+        string playCommand;
+        playCommand.append("play ");
+        playCommand.append(strX);
+        playCommand.append(" ");
+        playCommand.append(strY);
 
-    unsigned long xLen = playCommand.length();
-    int n1;
+        unsigned long xLen = playCommand.length();
+        int n1;
 
-    n1 = (int) write(clientSocket, &xLen, sizeof(xLen));
-    if (n1 == -1)
-        throw "Error sending string length";
-    for (unsigned long i = 0; i < xLen; ++i) {
-        n1 = (int) write(clientSocket, &playCommand[i], sizeof(char));
-        if (n1 == -1) {
+        n1 = (int) write(clientSocket, &xLen, sizeof(xLen));
+        if (n1 == -1)
             return false;
+        for (unsigned long i = 0; i < xLen; ++i) {
+            n1 = (int) write(clientSocket, &playCommand[i], sizeof(char));
+            if (n1 == -1)
+                return false;
         }
-
+        return true;
+    } catch (...) {
+        return false;
     }
-
-    return true;
-
 }
 
 int Client::getPriority() {
@@ -103,7 +103,7 @@ Client::~Client() {
     delete (serverIP);
 }
 
-void Client::handleBeforeGame() {
+bool Client::handleBeforeGame() {
     while (true) {
         string request;
 
@@ -114,7 +114,7 @@ void Client::handleBeforeGame() {
             connectToServer();
         } catch (const char *msg) {
             cout << "Failed to connect to server. Reason: " << msg << endl;
-            return;
+            return false;
         }
 
         if (!checkCommandValidation(request)) {
@@ -122,7 +122,8 @@ void Client::handleBeforeGame() {
             continue;
         }
 
-        writeToServer(request); // send the request to the server
+        if (!writeToServer(request)) // send the request to the server
+            return false;
 
         string serverFeedback = readFromServer();
 
@@ -131,7 +132,7 @@ void Client::handleBeforeGame() {
             cout << "The room: " << roomName << " was created!" << endl;
             break;
         }
-        
+
         if (strcmp(serverFeedback.c_str(), "Joined") == 0) {
             string roomToJoin = StringHandler::getSubStringAfterSpace(request);
             cout << "Joined: " << roomToJoin << endl;
@@ -140,19 +141,25 @@ void Client::handleBeforeGame() {
 
         cout << serverFeedback << endl; // print the list of the current rooms in the server
     }
+    return true;
 }
 
-void Client::writeToServer(string request) {
+bool Client::writeToServer(string request) {
     unsigned long sLen = request.length();
     int n;
 
-    n = (int) write(clientSocket, &sLen, sizeof(sLen));
-    if (n == -1)
-        throw "Error writing string length!";
-    for (int i = 0; i < sLen; i++) {
-        n = (int) write(clientSocket, &request[i], sizeof(char));
+    try {
+        n = (int) write(clientSocket, &sLen, sizeof(sLen));
         if (n == -1)
-            throw "Error writing message!";
+            throw "Error writing string length!";
+        for (int i = 0; i < sLen; i++) {
+            n = (int) write(clientSocket, &request[i], sizeof(char));
+            if (n == -1)
+                throw "Error writing message!";
+        }
+        return true; // in case of success return true.
+    } catch (...) {
+        return false; // in case of a failure return false.
     }
 }
 

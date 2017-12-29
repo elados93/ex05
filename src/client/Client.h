@@ -33,7 +33,7 @@ public:
      */
     int getPriority();
 
-    void handleBeforeGame();
+    bool handleBeforeGame();
 
     /**
     * this function reads 2 integers from the server and translate it to a real move on the board.
@@ -42,7 +42,7 @@ public:
     * @return 1 if reading a point was a success, or -1 in case the other client had no moves.
     */
     Point *translatePointFromServer();
-    void writeToServer(string request);
+    bool writeToServer(string request);
 
     int priority;
 private:
@@ -52,10 +52,7 @@ private:
 
     bool checkCommandValidation(string s);
     string readFromServer();
-    
-    bool foo() {
-        return false;
-    }
+
 };
 
 
