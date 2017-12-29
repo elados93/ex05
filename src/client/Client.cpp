@@ -19,9 +19,7 @@ using namespace std;
 
 Client::Client(const char *serverIP, int serverPort) :
         serverIP(serverIP), serverPort(serverPort),
-        clientSocket(0), priority(0) {
-    cout << "Client" << endl;
-}
+        clientSocket(0), priority(0) {}
 
 void Client::connectToServer() {
     // Create a socket point
@@ -107,7 +105,7 @@ bool Client::handleBeforeGame() {
     while (true) {
         string request;
 
-        // getline(cin, request); // gets dummy before input
+        getline(cin, request); // gets dummy before input
         getline(cin, request); // get the request from client
 
         try {

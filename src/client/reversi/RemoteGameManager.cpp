@@ -55,10 +55,8 @@ void RemoteGameManager::run() {
             string closeCommand = "close ";
             clientDetails.writeToServer(closeCommand);
         }
-    }
-    if (isServerStopped) {
+    } else
         printer.printMessage("Server disconnected!");
-    }
 
     if (lastMove != NULL)
         delete (lastMove);

@@ -13,10 +13,13 @@ using namespace std;
 
 class Client {
 public:
-    Client(const char *serverIP, int serverPort);
+    Client(const char *serverIP, int serverPort); // Constructor
 
-    virtual ~Client();
+    virtual ~Client(); // Destructor
 
+    /**
+     * Try to connect the server. Raise an error message.
+     */
     void connectToServer();
 
     /**
@@ -33,6 +36,11 @@ public:
      */
     int getPriority();
 
+    /**
+     * The method handle the clients requests. In case of an un valid message (not start, join or list_game)
+     * the method will notice the client.
+     * @return true if the operation went well, false if the server disconnected.
+     */
     bool handleBeforeGame();
 
     /**
@@ -42,6 +50,12 @@ public:
     * @return 1 if reading a point was a success, or -1 in case the other client had no moves.
     */
     Point *translatePointFromServer();
+
+    /**
+     * Write a request to the server. can be play x,y or close. if the server disconnected return false.
+     * @param request The wanted request to the server.
+     * @return True or false if the message delivered.
+     */
     bool writeToServer(string request);
 
     int priority;
@@ -50,7 +64,17 @@ private:
     int serverPort;
     int clientSocket;
 
+    /**
+     * Check if the command is valid before game. start or list_games or join.
+     * @param s The command.
+     * @return True if it's valid false otherwise.
+     */
     bool checkCommandValidation(string s);
+
+    /**
+     * Read message from server and return it.
+     * @return The message from server.
+     */
     string readFromServer();
 
 };

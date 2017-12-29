@@ -51,10 +51,22 @@ public:
   */
     void printMenu();
 
+    /**
+     * Print information that game started.
+     * @param currentOwner gets the current owner in order to know the right message.
+     */
     void printInformingGameStarted(owner currentOwner);
 
+    /**
+     * Print waiting for other player message.
+     * @param currentOwner gets the current owner in order to know the right message.
+     */
     void printWaitingForOtherPlayer(owner currentOwner);
 
+    /**
+     * Print the string to the console in a new line.
+     * @param s The wanted string.
+     */
     void printMessage(string s);
 
 private:

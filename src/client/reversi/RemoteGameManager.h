@@ -35,9 +35,13 @@ private:
     void playOneTurn();
 
     Client clientDetails;
+    bool isServerStopped; // switch that signify if the server stopped and need to exit the game.
 
+    /**
+     * Gets a point from server and verify it.
+     * @return -2 for ending the game, -1 for no moves 1 for success.
+     */
     int verifyPoint();
-    bool isServerStopped;
 };
 
 

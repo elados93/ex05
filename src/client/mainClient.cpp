@@ -21,7 +21,7 @@ using namespace std;
 
 int main() {
 
-    Board *board = new Board(4, 4); // ##%%366363CHANGE BACK!!#!@$!%^*%(%*%&#%!~
+    Board *board = new Board();
     GameState gameState1(board);
     ReversiDefaultRules *gameRules = new ReversiDefaultRules();
 
@@ -34,9 +34,9 @@ int main() {
     delete (menuConsole);
 
     int inputTypeGame;
-    //cin >> inputTypeGame;
+    cin >> inputTypeGame;
 
-    switch (3) { // ##%%366363CHANGE BACK!!#!@$!%^*%(%*%&#%!~
+    switch (inputTypeGame) { 
         case 1: {
             ConsolePrinter printer1(*board, p1, p3);
             GameManager game1(gameState1, p1, p3, printer1, *gameRules, false);
