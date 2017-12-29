@@ -1,11 +1,14 @@
 
 // Created by Elad Aharon and Shahar Palmor
-// ID: 311200786
+// ID: 311200786 307929927
 //
 
 #include <gtest/gtest.h>
 #include "../server/StringHandler.h"
 
+/**
+ * test the stringHandler class.
+ */
 TEST(StringHandlerTest,CheckSubStrings){
     StringHandler stringHandler;
     string s = "start hakalmarim";

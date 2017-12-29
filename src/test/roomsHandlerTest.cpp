@@ -1,9 +1,12 @@
-// Created by Shahar Palmor on 28/12/17.
-// ID 307929927
+// Created by Elad Aharon & Shahar Palmor on 28/12/17.
+// ID  311200786 307929927
 
 #include <gtest/gtest.h>
 #include "../server/RoomsHandler.h"
 
+/**
+ * test the roomsHandler class.
+ */
 TEST(roomsHandlerTest, checkRoom){
     RoomsHandler roomsHandler;
     Room *room1 = new Room();
