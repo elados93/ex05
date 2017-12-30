@@ -103,7 +103,7 @@ void *communicateWithClient(void *args) {
         if (n == -1)
             throw "Error reading string length";
 
-        char *command = new char[stringLength];
+        char *command = new char[stringLength + 1];
         for (int i = 0; i < stringLength; i++) {
             n = (int) read(currentClientSocket, &command[i], sizeof(char));
             if (n == -1)

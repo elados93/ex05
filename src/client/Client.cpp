@@ -205,5 +205,3 @@ bool Client::checkCommandValidation(string s) {
     return strcmp(command.c_str(), "start") == 0 || strcmp(command.c_str(), "list_games") == 0
            || strcmp(command.c_str(), "join") == 0;
 }
-
-
