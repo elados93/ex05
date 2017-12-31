@@ -15,7 +15,7 @@ class RemoteGameManager : public GameManager {
 public:
     RemoteGameManager(GameState &gameState, Player &player1, Player &player2, Printer &printer,
                       GameRules &gameRules, Client &client1);
-
+    
     /**
      * giving the current player his priority according to his client socket.
      * @param playerNumber is the priority.

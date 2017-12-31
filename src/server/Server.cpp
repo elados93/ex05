@@ -242,6 +242,7 @@ bool Server::shouldThreadDie(string command) {
 
 Server::~Server() {
     delete (commandManager);
+    delete (roomsHandler);
 }
 
 CommandManager *Server::getCommandManager() const {

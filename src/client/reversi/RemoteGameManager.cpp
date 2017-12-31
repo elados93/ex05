@@ -199,8 +199,10 @@ void RemoteGameManager::setCurrentPlayer(int playerNumber) {
 
 int RemoteGameManager::verifyPoint() {
     Point *p = clientDetails.translatePointFromServer();
-    if (p->getX() == -2 && p->getY() == -2)
+    if (p->getX() == -2 && p->getY() == -2) {
+        delete (p);
         return -2;
+    }
 
     int x = p->getX();
     int y = p->getY();
