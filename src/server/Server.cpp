@@ -62,33 +62,22 @@ void Server::start() {
     *) &serverAddress, sizeof(serverAddress)) == -1)
         throw "Error on binding";
 
-    ThreadPool threadPool(MAX_THREADS);
-
-/*    // create a thread that will accept clients
-    Server *pointerToServer = this;*/
+    ThreadPool *threadPool = new ThreadPool(MAX_THREADS);
 
     ServerAndPool serverAndPool;
-    serverAndPool.threadPool = &threadPool;
+    serverAndPool.threadPool = threadPool;
     serverAndPool.server = this;
 
     Task *acceptClientTask = new Task(acceptClients,(void *) &serverAndPool);
-    threadPool.addTask(acceptClientTask);
-    /*pthread_t *acceptClientsThread = new pthread_t();
+    threadPool->addTask(acceptClientTask);
 
-    int rc1 = pthread_create(acceptClientsThread, NULL, acceptClients,
-                            (void *) pointerToServer);
-    // check if the thread is valid
-    if (rc1) {
-        cout << "Error: unable to create thread, " << rc1 << endl;
-        exit(-1);
-    }
-*/
     // check if there was an exit command
     while (true) {
         string command;
         getline(cin, command);
         if (strcmp(command.c_str(), "exit") == 0) {
-           threadPool.terminate();
+           threadPool->terminate();
+            delete(threadPool);
             stop();
             delete(acceptClientTask);
             break;
@@ -97,7 +86,7 @@ void Server::start() {
 
 }
 
-static void *communicateWithClient(void *args) {
+void *communicateWithClient(void *args) {
     struct ClientSocketAndServer *clientSocketAndServer = (struct ClientSocketAndServer *) args;
     int currentClientSocket = clientSocketAndServer->clientSocket;
     Server *server = clientSocketAndServer->server;
@@ -154,10 +143,10 @@ static void *communicateWithClient(void *args) {
     delete (clientSocketAndServer);
 }
 
-static void *acceptClients(void *args) {
+void *acceptClients(void *args) {
     struct ServerAndPool serverAndPool = *((ServerAndPool *) args);
     Server *server = serverAndPool.server;
-    ThreadPool threadPool = *(serverAndPool.threadPool);
+    ThreadPool *threadPool = serverAndPool.threadPool;
     int serverSocket = server->getServerSocket();
     int numberOfConnectedClients = server->getNumberOfConnectedClients();
 
@@ -183,11 +172,11 @@ static void *acceptClients(void *args) {
 
 
             struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
-            clientSocketAndServer->server = (Server *)args;
+            clientSocketAndServer->server = server;
             clientSocketAndServer->clientSocket = clientSocket;
 
             Task *communicateWithTask = new Task(communicateWithClient,(void *)clientSocketAndServer);
-            threadPool.addTask(communicateWithTask);
+            threadPool->addTask(communicateWithTask);
           }
 
     } // end of listening to clients
