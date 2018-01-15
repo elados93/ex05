@@ -68,7 +68,7 @@ void Server::start() {
     serverAndPool.threadPool = threadPool;
     serverAndPool.server = this;
 
-    Task *acceptClientTask = new Task(acceptClients,(void *) &serverAndPool);
+    Task *acceptClientTask = new Task(acceptClients, (void *) &serverAndPool);
     threadPool->addTask(acceptClientTask);
 
     // check if there was an exit command
@@ -78,9 +78,9 @@ void Server::start() {
         if (strcmp(command.c_str(), "exit") == 0) {
             stop(); // disconnect all the sockets
             threadPool->terminate();
-
-            delete(acceptClientTask);
-            delete(threadPool);
+            close(serverSocket);
+            delete (acceptClientTask);
+            delete (threadPool);
             break;
         }
     }
@@ -117,11 +117,12 @@ void *communicateWithClient(void *args) {
         server->getCommandManager()->executeCommand(strCommand, currentClientSocket);
         pthread_mutex_unlock(&mutex_lock);
 
-        if (server->shouldThreadDie(strCommand)) { // if the command was start or list_games, stop the loop and delete the thread
+        if (server->shouldThreadDie(
+                strCommand)) { // if the command was start or list_games, stop the loop and delete the thread
             if (strcmp(strCommand.c_str(), "list_games") == 0) { // for list_games command close the socket
                 close(currentClientSocket);
                 pthread_mutex_lock(&mutex_lock);
-                server->numberOfConnectedClients --;
+                server->numberOfConnectedClients--;
                 pthread_mutex_unlock(&mutex_lock);
             }
             break;
@@ -158,27 +159,32 @@ void *acceptClients(void *args) {
     struct sockaddr_in clientAddress;
     socklen_t clientAddressLen;
     while (true) {
+        try {
+            cout << "Waiting for client..." << endl;
+            // Accept a new client connection
+            int clientSocket = accept(serverSocket, (struct
+                    sockaddr *) &clientAddress, &clientAddressLen);
 
-        cout << "Waiting for client..." << endl;
-        // Accept a new client connection
-        int clientSocket = accept(serverSocket, (struct
-                sockaddr *) &clientAddress, &clientAddressLen);
-        cout << "Client connected" << endl;
-        if (clientSocket == -1)
-            throw "Error on accept client #1";
-
-        // check if there is enough space for another client
-        if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
+            cout << "Client connected" << endl;
+            if (clientSocket == -1)
+                throw "Error on accept client";
 
 
+            // check if there is enough space for another client
+            if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
+                
+                struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
+                clientSocketAndServer->server = server;
+                clientSocketAndServer->clientSocket = clientSocket;
 
-            struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
-            clientSocketAndServer->server = server;
-            clientSocketAndServer->clientSocket = clientSocket;
-
-            Task *communicateWithTask = new Task(communicateWithClient,(void *)clientSocketAndServer);
-            threadPool->addTask(communicateWithTask);
-          }
+                Task *communicateWithTask = new Task(communicateWithClient, (void *) clientSocketAndServer);
+                threadPool->addTask(communicateWithTask);
+            }
+        }
+        catch (...) {
+            cout << "Error on accept client" << endl;
+            break;
+        }
 
     } // end of listening to clients
 }
@@ -193,7 +199,6 @@ void Server::stop() {
         }
         sleep(1);// so the cpu wont work all the time.
     }
-    close(serverSocket);
 }
 
 int Server::getPortFromFile(string fileName) {

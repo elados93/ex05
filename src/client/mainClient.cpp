@@ -79,7 +79,6 @@ int main() {
             game3.setCurrentPlayer(priorityClient);
 
             game3.run();
-            
             delete(client);
             break;
         }
@@ -93,6 +92,5 @@ int main() {
     }
 
     delete (gameRules);
-
     return 0;
 }

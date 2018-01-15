@@ -12,7 +12,7 @@
 RemoteGameManager::RemoteGameManager(GameState &gameState, Player &player1, Player &player2, Printer &printer,
                                      GameRules &gameRules, Client &client1) :
         GameManager(gameState, player1, player2,
-                    printer, gameRules, false), clientDetails(client1), isServerStopped(false) {}
+                    printer, gameRules, false), clientDetails(&client1), isServerStopped(false) {}
 
 void RemoteGameManager::run() {
     status currentStatus = checkStatus();
@@ -46,14 +46,14 @@ void RemoteGameManager::run() {
         // if there was a draw, only one player will send the close command
         if (currentStatus == DRAW && currentOwner == PLAYER_1) {
             string closeCommand = "close ";
-            clientDetails.writeToServer(closeCommand);
+            clientDetails->writeToServer(closeCommand);
         }
 
 
         // The looser needs to send the close message, the winner already knows he won
         if (currentStatus == WIN && currentOwner != winner) {
             string closeCommand = "close ";
-            clientDetails.writeToServer(closeCommand);
+            clientDetails->writeToServer(closeCommand);
         }
     } else
         printer.printMessage("Server disconnected!");
@@ -69,7 +69,7 @@ void RemoteGameManager::playOneTurn() {
     owner currentOwner, otherOwner; // Representing the enum for the current player & other player.
     Player *otherPlayer; // Representing the pointer to the other player.
 
-    if (clientDetails.priority == 1) {// in case the player is player_1
+    if (clientDetails->priority == 1) {// in case the player is player_1
         playerPossibleMoves = gameRules.getPossibleMoves(gameState, PLAYER_1);
         currentOwner = PLAYER_1;
         otherOwner = PLAYER_2;
@@ -96,7 +96,7 @@ void RemoteGameManager::playOneTurn() {
             gameRules.makeMove(gameState, *lastMove, currentOwner);
             printer.printBoard();
             // sending the move to the server
-            if (!clientDetails.sendPoint(lastMove->getX(), lastMove->getY())) {
+            if (!clientDetails->sendPoint(lastMove->getX(), lastMove->getY())) {
                 isServerStopped = true;
                 return;
             }
@@ -125,7 +125,7 @@ void RemoteGameManager::playOneTurn() {
             lastMove = new Point(player1.getMove(gameState));
             gameRules.makeMove(gameState, *lastMove, currentOwner);
             printer.printBoard();
-            if (!clientDetails.sendPoint(lastMove->getX(), lastMove->getY())) {
+            if (!clientDetails->sendPoint(lastMove->getX(), lastMove->getY())) {
                 isServerStopped = true;
                 return;
             }
@@ -166,7 +166,7 @@ void RemoteGameManager::playOneTurn() {
                 delete (lastMove);
 
             lastMove = NULL;
-            if (!clientDetails.sendPoint(-1, -1)) {
+            if (!clientDetails->sendPoint(-1, -1)) {
                 isServerStopped = true;
                 return;
             }
@@ -180,7 +180,7 @@ void RemoteGameManager::playOneTurn() {
             lastMove = new Point(currentPlayer->getMove(gameState));
             gameRules.makeMove(gameState, *lastMove, currentOwner);
             printer.printBoard();
-            if (!clientDetails.sendPoint(lastMove->getX(), lastMove->getY())) {
+            if (!clientDetails->sendPoint(lastMove->getX(), lastMove->getY())) {
                 isServerStopped = true;
                 return;
             }
@@ -198,7 +198,7 @@ void RemoteGameManager::setCurrentPlayer(int playerNumber) {
 }
 
 int RemoteGameManager::verifyPoint() {
-    Point *p = clientDetails.translatePointFromServer();
+    Point *p = clientDetails->translatePointFromServer();
     if (p->getX() == -2 && p->getY() == -2) {
         delete (p);
         return -2;

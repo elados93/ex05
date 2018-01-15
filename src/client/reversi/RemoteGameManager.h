@@ -34,7 +34,7 @@ private:
      */
     void playOneTurn();
 
-    Client clientDetails;
+    Client *clientDetails;
     bool isServerStopped; // switch that signify if the server stopped and need to exit the game.
 
     /**
