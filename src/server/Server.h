@@ -13,8 +13,10 @@
 #include <vector>
 #include "Commands/CommandManager.h"
 #include "RoomsHandler.h"
+#include "ThreadPool.h"
 
 #define MAX_CONNECTED_CLIENTS 30 // can be modified by the programmer
+#define MAX_THREADS 5
 
 using namespace std;
 
@@ -43,20 +45,20 @@ public:
 
     /**
      * checks if the last command of the client was to create a room and after making the room close the
-     * thread of this specific client.
+     * task of this specific client.
      * @param command is the start command that verify if we can close this thread
      * @return true or false.
      */
-    bool shouldThreadDie(string command);
+    bool shouldTaskEnd(string command);
 
     /**
      * checks if the last command of the client was to join to a valid room, and if so, starting a valid game room
-     * on the thread of the joining client.
+     * on the task of the joining client.
      * @param command is the join command if true.
      * @param mySocket the socket of the current player.
      * @return true or false.
      */
-    bool shouldThreadRunGame(string command, int mySocket);
+    bool shouldTaskRunGame(string command, int mySocket);
 
     /**
      * loop throught the vector of rooms and checks for a specific room, comming from the command param.
@@ -70,25 +72,22 @@ public:
      */
     int numberOfConnectedClients;
 
-    /**
-     * delete a current thread running in case of starting a room or finishing a game.
-     * @param threadToDelete
-     */
-    void deleteThread(pthread_t *threadToDelete);
-
     int getNumberOfConnectedClients() const;
 
     int getServerSocket() const;
 
-    vector<pthread_t *> &getVectorThreads();
+    ThreadPool *getThreadPool();
 
+    pthread_mutex_t &getMutex_lock();
 
 private:
     int port;
     int serverSocket; // the socket's file descriptor
     CommandManager *commandManager;
-    vector <pthread_t *> vectorThreads;
+    ThreadPool *pool;
     RoomsHandler *roomsHandler;
+
+    //pthread_mutex_t mutex_lock;
 };
 
 #endif //EX04_SERVER_H
