@@ -76,10 +76,11 @@ void Server::start() {
         string command;
         getline(cin, command);
         if (strcmp(command.c_str(), "exit") == 0) {
-           threadPool->terminate();
-            delete(threadPool);
-            stop();
+            stop(); // disconnect all the sockets
+            threadPool->terminate();
+
             delete(acceptClientTask);
+            delete(threadPool);
             break;
         }
     }
@@ -190,6 +191,7 @@ void Server::stop() {
         if (roomsHandler->areRoomsEmpty()) {
             break;
         }
+        sleep(1);// so the cpu wont work all the time.
     }
     close(serverSocket);
 }
