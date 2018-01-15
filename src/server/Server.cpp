@@ -20,20 +20,24 @@ using namespace std;
  * @param args is all the information needed to the clients connection.
  * @return
  */
-void *communicateWithClient(void *args);
+static void *communicateWithClient(void *args);
 
 /**
  * this is the threadic function of the server
  * @param args is all the information needed to the servers connection.
  * @return
  */
-void *acceptClients(void *args);
+static void *acceptClients(void *args);
 
 
 struct ClientSocketAndServer {
     Server *server;
-    pthread_t *threadID;
     int clientSocket;
+};
+
+struct ServerAndPool {
+    Server *server;
+    ThreadPool *threadPool;
 };
 
 Server::Server(int port) : port(port), serverSocket(0), numberOfConnectedClients(0) {
@@ -58,9 +62,18 @@ void Server::start() {
     *) &serverAddress, sizeof(serverAddress)) == -1)
         throw "Error on binding";
 
-    // create a thread that will accept clients
-    Server *pointerToServer = this;
-    pthread_t *acceptClientsThread = new pthread_t();
+    ThreadPool threadPool(MAX_THREADS);
+
+/*    // create a thread that will accept clients
+    Server *pointerToServer = this;*/
+
+    ServerAndPool serverAndPool;
+    serverAndPool.threadPool = &threadPool;
+    serverAndPool.server = this;
+
+    Task *acceptClientTask = new Task(acceptClients,(void *) &serverAndPool);
+    threadPool.addTask(acceptClientTask);
+    /*pthread_t *acceptClientsThread = new pthread_t();
 
     int rc1 = pthread_create(acceptClientsThread, NULL, acceptClients,
                             (void *) pointerToServer);
@@ -69,28 +82,25 @@ void Server::start() {
         cout << "Error: unable to create thread, " << rc1 << endl;
         exit(-1);
     }
-
+*/
     // check if there was an exit command
     while (true) {
         string command;
         getline(cin, command);
         if (strcmp(command.c_str(), "exit") == 0) {
-            int cancelFeedback = pthread_cancel(*acceptClientsThread);
-            if (cancelFeedback != 0) // check cancel function
-                throw "Could not stop the accepting clients thread!";
+           threadPool.terminate();
             stop();
-            delete(acceptClientsThread);
+            delete(acceptClientTask);
             break;
         }
     }
 
 }
 
-void *communicateWithClient(void *args) {
+static void *communicateWithClient(void *args) {
     struct ClientSocketAndServer *clientSocketAndServer = (struct ClientSocketAndServer *) args;
     int currentClientSocket = clientSocketAndServer->clientSocket;
     Server *server = clientSocketAndServer->server;
-    pthread_t *current_thread = clientSocketAndServer->threadID;
 
     pthread_mutex_lock(&mutex_lock);
     server->numberOfConnectedClients++; // increment the number of clients for the current one.
@@ -140,15 +150,17 @@ void *communicateWithClient(void *args) {
             break;
         }
     }
-    server->deleteThread(current_thread); // delete the thread from the threads vector
+
     delete (clientSocketAndServer);
 }
 
-void *acceptClients(void *args) {
-    Server *server = (Server *)args;
+static void *acceptClients(void *args) {
+    struct ServerAndPool serverAndPool = *((ServerAndPool *) args);
+    Server *server = serverAndPool.server;
+    ThreadPool threadPool = *(serverAndPool.threadPool);
     int serverSocket = server->getServerSocket();
     int numberOfConnectedClients = server->getNumberOfConnectedClients();
-    vector <pthread_t *> &vectorThreads = server->getVectorThreads();
+
 
     // Start listening to incoming connections
     listen(serverSocket, MAX_CONNECTED_CLIENTS);
@@ -168,25 +180,15 @@ void *acceptClients(void *args) {
         // check if there is enough space for another client
         if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
 
-            pthread_t *currentThread = new pthread_t();
-            pthread_mutex_lock(&mutex_lock);
-            vectorThreads.push_back(currentThread);
-            pthread_mutex_unlock(&mutex_lock);
+
 
             struct ClientSocketAndServer *clientSocketAndServer = new struct ClientSocketAndServer();
             clientSocketAndServer->server = (Server *)args;
             clientSocketAndServer->clientSocket = clientSocket;
-            clientSocketAndServer->threadID = currentThread;
 
-            int rc2 = pthread_create(currentThread, NULL, communicateWithClient,
-                                     (void *) clientSocketAndServer);
-
-            // check if the thread is valid
-            if (rc2) {
-                cout << "Error: unable to create thread, " << rc2 << endl;
-                exit(-1);
-            }
-        }
+            Task *communicateWithTask = new Task(communicateWithClient,(void *)clientSocketAndServer);
+            threadPool.addTask(communicateWithTask);
+          }
 
     } // end of listening to clients
 }
@@ -271,18 +273,6 @@ Room *Server::getRoomFromCommand(string command) {
     return room;
 }
 
-void Server::deleteThread(pthread_t *threadToDelete) {
-    pthread_mutex_lock(&mutex_lock);
-    for (vector<pthread_t *>::iterator it = vectorThreads.begin(); it != vectorThreads.end(); ++it) {
-        if (*it == threadToDelete) {
-            vectorThreads.erase(it);
-            delete (threadToDelete);
-            pthread_mutex_unlock(&mutex_lock);
-            return;
-        }
-    }
-    pthread_mutex_unlock(&mutex_lock);
-}
 
 int Server::getNumberOfConnectedClients() const {
     return numberOfConnectedClients;
@@ -290,8 +280,4 @@ int Server::getNumberOfConnectedClients() const {
 
 int Server::getServerSocket() const {
     return serverSocket;
-}
-
-vector<pthread_t *> &Server::getVectorThreads() {
-    return vectorThreads;
 }

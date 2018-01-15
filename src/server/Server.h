@@ -13,8 +13,10 @@
 #include <vector>
 #include "Commands/CommandManager.h"
 #include "RoomsHandler.h"
+#include "ThreadPool.h"
 
 #define MAX_CONNECTED_CLIENTS 30 // can be modified by the programmer
+#define MAX_THREADS 5
 
 using namespace std;
 
@@ -70,24 +72,17 @@ public:
      */
     int numberOfConnectedClients;
 
-    /**
-     * delete a current thread running in case of starting a room or finishing a game.
-     * @param threadToDelete
-     */
-    void deleteThread(pthread_t *threadToDelete);
 
     int getNumberOfConnectedClients() const;
 
     int getServerSocket() const;
-
-    vector<pthread_t *> &getVectorThreads();
 
 
 private:
     int port;
     int serverSocket; // the socket's file descriptor
     CommandManager *commandManager;
-    vector <pthread_t *> vectorThreads;
+    //vector <pthread_t *> vectorThreads;
     RoomsHandler *roomsHandler;
 };
 
