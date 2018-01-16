@@ -5,6 +5,10 @@
 
 #include "ThreadPool.h"
 #include <unistd.h>
+#include <iostream>
+#include <cstdlib>
+
+using namespace std;
 
 ThreadPool::ThreadPool(int threadsNum) :
         stopped(false) {
@@ -32,7 +36,13 @@ void ThreadPool::executeTasks() {
             Task *task = tasksQueue.front();
             tasksQueue.pop();
             pthread_mutex_unlock(&lock);
-            task->execute();
+            try {
+                task->execute();
+            }
+            catch (const char *msg) {
+                cout << "Cannot start server. Reason: " << msg << endl;
+                exit(-1);
+            }
         } else {
             pthread_mutex_unlock(&lock);
             sleep(1);

@@ -24,9 +24,9 @@ Client::Client(const char *serverIP, int serverPort) :
 void Client::connectToServer() {
     // Create a socket point
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (clientSocket == -1)
+    if (clientSocket == -1) {
         throw "Error opening socket";
-
+    }
     // Get a hostent structure for the given host address
     struct hostent *server;
 

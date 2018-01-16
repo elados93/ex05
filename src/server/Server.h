@@ -76,7 +76,7 @@ public:
     int getNumberOfConnectedClients() const;
 
     int getServerSocket() const;
-
+    int getPort();
 
 private:
     int port;

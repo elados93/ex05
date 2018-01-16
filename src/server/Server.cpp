@@ -47,28 +47,13 @@ Server::Server(int port) : port(port), serverSocket(0), numberOfConnectedClients
 }
 
 void Server::start() {
-    // Create a socket point
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1)
-        throw "Error opening socket";
-
-    // Assign a local address to the socket
-    struct sockaddr_in serverAddress;
-    bzero((void *) &serverAddress, sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
-    serverAddress.sin_port = htons(port);
-    if (bind(serverSocket, (struct sockaddr
-    *) &serverAddress, sizeof(serverAddress)) == -1)
-        throw "Error on binding";
-
     ThreadPool *threadPool = new ThreadPool(MAX_THREADS);
 
-    ServerAndPool serverAndPool;
-    serverAndPool.threadPool = threadPool;
-    serverAndPool.server = this;
+    ServerAndPool *serverAndPool = new ServerAndPool();
+    serverAndPool->threadPool = threadPool;
+    serverAndPool->server = this;
 
-    Task *acceptClientTask = new Task(acceptClients, (void *) &serverAndPool);
+    Task *acceptClientTask = new Task(acceptClients, (void *) serverAndPool);
     threadPool->addTask(acceptClientTask);
 
     // check if there was an exit command
@@ -80,6 +65,7 @@ void Server::start() {
             threadPool->terminate();
             close(serverSocket);
             delete (acceptClientTask);
+            delete(serverAndPool);
             delete (threadPool);
             break;
         }
@@ -149,8 +135,29 @@ void *acceptClients(void *args) {
     struct ServerAndPool serverAndPool = *((ServerAndPool *) args);
     Server *server = serverAndPool.server;
     ThreadPool *threadPool = serverAndPool.threadPool;
-    int serverSocket = server->getServerSocket();
+    //int serverSocket = server->getServerSocket();
     int numberOfConnectedClients = server->getNumberOfConnectedClients();
+    int port = server->getPort();
+
+    int serverSocket;
+
+    // Create a socket point
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket == -1)
+        throw "Error opening socket";
+
+    // Assign a local address to the socket
+    struct sockaddr_in serverAddress;
+    bzero((void *) &serverAddress, sizeof(serverAddress));
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons((uint16_t)port);
+
+    if (bind(serverSocket, (struct sockaddr
+        *) &serverAddress, sizeof(serverAddress)) == -1)
+            throw "Error on binding";
+
+
 
 
     // Start listening to incoming connections
@@ -159,16 +166,14 @@ void *acceptClients(void *args) {
     struct sockaddr_in clientAddress;
     socklen_t clientAddressLen;
     while (true) {
-        try {
             cout << "Waiting for client..." << endl;
             // Accept a new client connection
             int clientSocket = accept(serverSocket, (struct
                     sockaddr *) &clientAddress, &clientAddressLen);
 
-            cout << "Client connected" << endl;
             if (clientSocket == -1)
                 throw "Error on accept client";
-
+            cout << "Client connected" << endl;
 
             // check if there is enough space for another client
             if (numberOfConnectedClients != MAX_CONNECTED_CLIENTS) {
@@ -180,11 +185,6 @@ void *acceptClients(void *args) {
                 Task *communicateWithTask = new Task(communicateWithClient, (void *) clientSocketAndServer);
                 threadPool->addTask(communicateWithTask);
             }
-        }
-        catch (...) {
-            cout << "Error on accept client" << endl;
-            break;
-        }
 
     } // end of listening to clients
 }
@@ -276,4 +276,8 @@ int Server::getNumberOfConnectedClients() const {
 
 int Server::getServerSocket() const {
     return serverSocket;
+}
+
+int Server::getPort() {
+    return port;
 }

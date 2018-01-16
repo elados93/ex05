@@ -21,8 +21,8 @@ Client *getClientFromFile(string fileName);
 using namespace std;
 
 int main() {
-
-    Board *board = new Board();
+    //signal(SIGPIPE,signalHandler);
+    Board *board = new Board(4,4);
     GameState gameState1(board);
     ReversiDefaultRules *gameRules = new ReversiDefaultRules();
 
@@ -93,4 +93,7 @@ int main() {
 
     delete (gameRules);
     return 0;
+
+
+
 }
