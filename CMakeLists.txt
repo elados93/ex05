@@ -19,7 +19,7 @@ set(REMOTE_FILES src/client/Client.cpp src/client/Client.h
         src/server/Commands/ListCommand.h src/server/Commands/JoinCommand.cpp src/server/Commands/JoinCommand.h
         src/server/Commands/CloseCommand.cpp src/server/Commands/CloseCommand.h src/server/Commands/Command.cpp
         src/server/HandleGame.cpp src/server/HandleGame.h src/server/StringHandler.cpp src/server/StringHandler.h
-        src/server/Commands/Command.h src/server/RoomsHandler.cpp src/server/RoomsHandler.h src/server/HandleClient.cpp src/server/HandleClient.h)
+        src/server/Commands/Command.h src/server/RoomsHandler.cpp src/server/RoomsHandler.h)
 
 set(REVERSI_FILES src/client/reversi/AIPlayer.cpp src/client/reversi/AIPlayer.h
         src/client/reversi/Board.cpp src/client/reversi/Board.h

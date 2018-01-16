@@ -8,6 +8,11 @@
 
 class Task {
 public:
+    /**
+     * constructor
+     * @param func is the function to execute
+     * @param arg is the parameters needed to execute the task.
+     */
     Task(void *(*func)(void *arg), void *arg) :
             func(func), arg(arg) {}
 
@@ -15,6 +20,10 @@ public:
         func(arg);
     }
 
+    /**
+     * execute a specific task.
+     * @param arg is the parameters needed to execute the task.
+     */
     virtual ~Task() {}
 
 private:
