@@ -135,7 +135,6 @@ void *acceptClients(void *args) {
     struct ServerAndPool serverAndPool = *((ServerAndPool *) args);
     Server *server = serverAndPool.server;
     ThreadPool *threadPool = serverAndPool.threadPool;
-    //int serverSocket = server->getServerSocket();
     int numberOfConnectedClients = server->getNumberOfConnectedClients();
     int port = server->getPort();
 
@@ -156,9 +155,6 @@ void *acceptClients(void *args) {
     if (bind(serverSocket, (struct sockaddr
         *) &serverAddress, sizeof(serverAddress)) == -1)
             throw "Error on binding";
-
-
-
 
     // Start listening to incoming connections
     listen(serverSocket, MAX_CONNECTED_CLIENTS);
@@ -268,7 +264,6 @@ Room *Server::getRoomFromCommand(string command) {
     pthread_mutex_unlock(&mutex_lock);
     return room;
 }
-
 
 int Server::getNumberOfConnectedClients() const {
     return numberOfConnectedClients;

@@ -3,8 +3,6 @@ project(ex04)
 
 set(CMAKE_CXX_STANDARD 98)
 
-add_subdirectory(src/gtest_src)
-
 include_directories(include src/gtest_src/googletest/include ${gtest_src}/include ${gtest_src})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -pthread")
@@ -38,5 +36,3 @@ add_executable(Client ${REMOTE_FILES} ${REVERSI_FILES} src/client/mainClient.cpp
 add_executable(Server ${REMOTE_FILES} ${REVERSI_FILES} src/server/mainServer.cpp)
 
 add_executable(TestReversi ${REVERSI_FILES} ${REMOTE_FILES} ${TEST_FILES} src/test/gtest_main.cpp)
-
-target_link_libraries(TestReversi gtest gtest_main gmock)
